@@ -2,8 +2,6 @@
   "name": "esron-portfolio-root",
   "private": true,
   "scripts": {
-    "frontend-install": "npm install --prefix frontend",
-    "frontend-build": "npm run build --prefix frontend",
-    "build": "npm run frontend-build"
+    "build": "cd frontend && npm install && npm run build"
   }
 }
