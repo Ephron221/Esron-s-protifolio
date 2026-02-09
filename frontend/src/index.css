@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply transition-colors duration-300;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  }
+  
+  .glass-dark {
+    @apply bg-black/40 backdrop-blur-md border border-white/10;
+  }
+
+  .btn-primary {
+    @apply px-6 py-2 bg-primary text-black font-semibold rounded-lg hover:bg-primary-dark transition-all transform hover:scale-105 active:scale-95;
+  }
+
+  .section-title {
+    @apply text-4xl font-bold mb-8 text-center;
+  }
+}
+
+.cyan-glow {
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5), 0 0 20px rgba(0, 255, 255, 0.3);
+}
+
+.pdf-viewer-container {
+  user-select: none;
+  -webkit-user-drag: none;
+}
