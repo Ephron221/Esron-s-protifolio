@@ -2,6 +2,7 @@
   "name": "esron-portfolio-root",
   "private": true,
   "scripts": {
+    "start": "cd backend && npm install && node server.js",
     "build": "cd frontend && npm install && npx vite build"
   }
 }
