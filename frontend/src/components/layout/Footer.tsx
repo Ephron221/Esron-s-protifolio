@@ -1,5 +1,5 @@
 import React from 'react';
-import { Github, Linkedin, Twitter, Mail } from 'lucide-react';
+import { Github, Linkedin, Twitter, Mail, MessageCircle } from 'lucide-react';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -28,16 +28,19 @@ const Footer = () => {
           <div>
             <h4 className="text-lg font-semibold mb-4">Connect</h4>
             <div className="flex space-x-4">
-              <a href="#" className="p-2 glass rounded-full hover:text-primary transition-all">
+              <a href="https://github.com/Ephron221" target="_blank" rel="noopener noreferrer" className="p-2 glass rounded-full hover:text-primary transition-all">
                 <Github size={20} />
               </a>
-              <a href="#" className="p-2 glass rounded-full hover:text-primary transition-all">
+              <a href="https://linkedin.com/in/esron-tuyishimire" target="_blank" rel="noopener noreferrer" className="p-2 glass rounded-full hover:text-primary transition-all">
                 <Linkedin size={20} />
+              </a>
+              <a href="https://wa.me/250787846344" target="_blank" rel="noopener noreferrer" className="p-2 glass rounded-full hover:text-primary transition-all">
+                <MessageCircle size={20} />
               </a>
               <a href="#" className="p-2 glass rounded-full hover:text-primary transition-all">
                 <Twitter size={20} />
               </a>
-              <a href="#" className="p-2 glass rounded-full hover:text-primary transition-all">
+              <a href="mailto:esront21@gmail.com" className="p-2 glass rounded-full hover:text-primary transition-all">
                 <Mail size={20} />
               </a>
             </div>
