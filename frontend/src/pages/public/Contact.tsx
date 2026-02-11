@@ -30,9 +30,9 @@ const Contact = () => {
   };
 
   const contactInfo = [
-    { icon: Mail, label: 'Email', value: 'hello@esron.dev', link: 'mailto:hello@esron.dev' },
-    { icon: Phone, label: 'Phone', value: '+1 (234) 567-890', link: 'tel:+1234567890' },
-    { icon: MapPin, label: 'Location', value: 'San Francisco, CA', link: '#' },
+    { icon: Mail, label: 'Email', value: 'esront21@gmail.com', link: 'mailto:esront21@gmail.com' },
+    { icon: Phone, label: 'Phone', value: '+250787846344', link: 'tel:+250787846344' },
+    { icon: MapPin, label: 'Location', value: 'Kigali,Rwanda ', link: '#' },
   ];
 
   return (
