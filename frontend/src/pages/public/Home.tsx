@@ -89,7 +89,7 @@ const Home = () => {
   }
 
   const validRoles = homeData?.roles?.filter((r: string) => r && r.trim() !== '') || [];
-  
+
   const heroData = {
     title: homeData?.title || "Hi, I'm Esron",
     description: homeData?.description || "I build modern, scalable, and interactive digital experiences with passion and precision.",
@@ -109,24 +109,24 @@ const Home = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-16">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
               className="flex-1 text-center lg:text-left"
             >
-              <motion.span 
+              <motion.span
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="inline-block text-primary font-bold tracking-[0.2em] uppercase mb-6 text-sm py-1 px-3 border border-primary/20 rounded-full bg-primary/5"
               >
                 Available for new projects
               </motion.span>
-              
+
               <h1 className="text-6xl md:text-8xl font-black mb-4 leading-none tracking-tighter text-gray-900 dark:text-white">
                 {heroData.title}
               </h1>
-              
+
               <Typewriter texts={heroData.roles} />
 
               <p className="text-xl text-gray-600 dark:text-gray-400 mt-10 mb-12 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
@@ -135,7 +135,7 @@ const Home = () => {
 
               <div className="flex flex-wrap gap-5 justify-center lg:justify-start mb-12">
                 <Link to="/projects" className="btn-primary flex items-center gap-2 h-14 px-8 group">
-                  Explore Work 
+                  Explore Work
                   <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />
                 </Link>
                 <Link to="/cv" className="btn-secondary flex items-center gap-2 h-14 px-8 group">
@@ -156,7 +156,7 @@ const Home = () => {
               </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1 }}
@@ -165,9 +165,9 @@ const Home = () => {
               <div className="relative w-72 h-72 md:w-[450px] md:h-[450px] mx-auto">
                 <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping blur-3xl opacity-20"></div>
                 <div className="relative w-full h-full rounded-3xl border-2 border-primary/30 p-3 overflow-hidden bg-white dark:bg-[#0A0A0A] rotate-3 hover:rotate-0 transition-transform duration-700 shadow-[0_0_50px_rgba(0,255,255,0.1)]">
-                  <img 
-                    src={heroData.profileImage} 
-                    alt="Esron Profile" 
+                  <img
+                    src={heroData.profileImage}
+                    alt="Esron Profile"
                     className="w-full h-full object-cover rounded-2xl grayscale hover:grayscale-0 transition-all duration-700"
                   />
                 </div>
@@ -176,7 +176,7 @@ const Home = () => {
           </div>
 
           {heroData.statistics.length > 0 && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -249,8 +249,8 @@ const Home = () => {
                 className="group relative bg-white dark:bg-[#0A0A0A] rounded-[40px] overflow-hidden border border-gray-200 dark:border-white/5 shadow-2xl"
               >
                 <div className="aspect-[16/10] overflow-hidden">
-                  <img 
-                    src={project.image.startsWith('http') ? project.image : `${BASE_URL}${project.image}`} 
+                  <img
+                    src={project.image.startsWith('http') ? project.image : `${BASE_URL}${project.image}`}
                     alt={project.title}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
@@ -337,7 +337,7 @@ const Home = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {testimonials.map((t, i) => (
-              <motion.div 
+              <motion.div
                 key={t._id}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
