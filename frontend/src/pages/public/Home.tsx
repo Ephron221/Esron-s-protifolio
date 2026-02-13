@@ -39,7 +39,7 @@ const Typewriter = ({ texts }: { texts: string[] }) => {
 
   useEffect(() => {
     if (!texts || texts.length === 0) {
-      setDisplayText('Developer'); // Fallback if no texts provided
+      setDisplayText('Developer');
       return;
     }
 
@@ -88,7 +88,6 @@ const Home = () => {
     return <LoadingSpinner />;
   }
 
-  // Filter out any empty roles from the database
   const validRoles = homeData?.roles?.filter((r: string) => r && r.trim() !== '') || [];
   
   const heroData = {
@@ -104,7 +103,6 @@ const Home = () => {
 
   return (
     <div className="space-y-32 pb-32">
-      {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center pt-20 overflow-hidden">
         <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px] animate-pulse"></div>
         <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] animate-pulse delay-700"></div>
@@ -125,13 +123,13 @@ const Home = () => {
                 Available for new projects
               </motion.span>
               
-              <h1 className="text-6xl md:text-8xl font-black mb-4 leading-none tracking-tighter">
+              <h1 className="text-6xl md:text-8xl font-black mb-4 leading-none tracking-tighter text-gray-900 dark:text-white">
                 {heroData.title}
               </h1>
               
               <Typewriter texts={heroData.roles} />
 
-              <p className="text-xl text-gray-400 mt-10 mb-12 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+              <p className="text-xl text-gray-600 dark:text-gray-400 mt-10 mb-12 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
                 {heroData.description}
               </p>
 
@@ -150,7 +148,7 @@ const Home = () => {
                 {heroData.socialLinks.map((link: any, i: number) => {
                   const Icon = iconMap[link.platform] || Github;
                   return (
-                    <a key={i} href={link.url} target="_blank" rel="noreferrer" className="p-3 bg-white/5 rounded-xl hover:bg-primary hover:text-black transition-all border border-white/5 hover:border-primary">
+                    <a key={i} href={link.url} target="_blank" rel="noreferrer" className="p-3 bg-gray-100 dark:bg-white/5 rounded-xl hover:bg-primary hover:text-black transition-all border border-gray-200 dark:border-white/5 hover:border-primary">
                       <Icon size={20} />
                     </a>
                   );
@@ -166,7 +164,7 @@ const Home = () => {
             >
               <div className="relative w-72 h-72 md:w-[450px] md:h-[450px] mx-auto">
                 <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping blur-3xl opacity-20"></div>
-                <div className="relative w-full h-full rounded-3xl border-2 border-primary/30 p-3 overflow-hidden bg-[#0A0A0A] rotate-3 hover:rotate-0 transition-transform duration-700 shadow-[0_0_50px_rgba(0,255,255,0.1)]">
+                <div className="relative w-full h-full rounded-3xl border-2 border-primary/30 p-3 overflow-hidden bg-white dark:bg-[#0A0A0A] rotate-3 hover:rotate-0 transition-transform duration-700 shadow-[0_0_50px_rgba(0,255,255,0.1)]">
                   <img 
                     src={heroData.profileImage} 
                     alt="Esron Profile" 
@@ -182,12 +180,12 @@ const Home = () => {
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="mt-24 grid grid-cols-2 md:grid-cols-4 gap-8 py-12 px-8 glass-dark rounded-[40px] border-white/5 shadow-2xl"
+              className="mt-24 grid grid-cols-2 md:grid-cols-4 gap-8 py-12 px-8 bg-gray-50 dark:glass-dark rounded-[40px] border border-gray-200 dark:border-white/5 shadow-2xl"
             >
               {heroData.statistics.map((stat: any, index: number) => (
-                <div key={index} className="text-center group border-r last:border-r-0 border-white/10">
+                <div key={index} className="text-center group border-r last:border-r-0 border-gray-200 dark:border-white/10">
                   <h3 className="text-4xl md:text-5xl font-black text-primary mb-2 group-hover:cyan-glow transition-all">{stat.value}</h3>
-                  <p className="text-gray-500 uppercase tracking-widest text-xs font-bold">{stat.label}</p>
+                  <p className="text-gray-500 dark:text-gray-400 uppercase tracking-widest text-xs font-bold">{stat.label}</p>
                 </div>
               ))}
             </motion.div>
@@ -199,7 +197,7 @@ const Home = () => {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-20">
           <h2 className="section-title">What I <span className="text-primary">Offer</span></h2>
-          <p className="text-gray-400 max-w-2xl mx-auto">Providing high-end digital solutions tailored to your business needs.</p>
+          <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">Providing high-end digital solutions tailored to your business needs.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -212,13 +210,13 @@ const Home = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="glass-dark p-10 rounded-[40px] border border-white/5 hover:border-primary/30 transition-all group"
+                className="bg-gray-50 dark:glass-dark p-10 rounded-[40px] border border-gray-200 dark:border-white/5 hover:border-primary/30 transition-all group shadow-sm hover:shadow-xl"
               >
                 <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-primary transition-colors text-primary group-hover:text-black">
                   <Icon size={32} />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">{service.title}</h3>
-                <p className="text-gray-400 leading-relaxed mb-6">{service.description}</p>
+                <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">{service.title}</h3>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-6">{service.description}</p>
                 <Link to="/contact" className="text-primary font-bold flex items-center gap-2 group/link">
                   Learn more <ArrowRight size={16} className="transition-transform group-hover/link:translate-x-1" />
                 </Link>
@@ -229,12 +227,12 @@ const Home = () => {
       </section>
 
       {/* Featured Projects Section */}
-      <section className="bg-white/5 py-32">
+      <section className="bg-gray-50 dark:bg-white/5 py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
             <div>
               <h2 className="section-title text-left">Featured <span className="text-primary">Work</span></h2>
-              <p className="text-gray-400">A selection of my most impactful and complex builds.</p>
+              <p className="text-gray-600 dark:text-gray-400">A selection of my most impactful and complex builds.</p>
             </div>
             <Link to="/projects" className="btn-secondary flex items-center gap-2 group">
               View All Projects <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
@@ -248,7 +246,7 @@ const Home = () => {
                 initial={{ opacity: 0, scale: 0.95 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                className="group relative bg-[#0A0A0A] rounded-[40px] overflow-hidden border border-white/5 shadow-2xl"
+                className="group relative bg-white dark:bg-[#0A0A0A] rounded-[40px] overflow-hidden border border-gray-200 dark:border-white/5 shadow-2xl"
               >
                 <div className="aspect-[16/10] overflow-hidden">
                   <img 
@@ -265,13 +263,13 @@ const Home = () => {
                       </span>
                     ))}
                   </div>
-                  <h3 className="text-2xl font-bold mb-3 group-hover:text-primary transition-colors">{project.title}</h3>
-                  <p className="text-gray-500 text-sm mb-6 line-clamp-2">{project.description}</p>
+                  <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white group-hover:text-primary transition-colors">{project.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-500 text-sm mb-6 line-clamp-2">{project.description}</p>
                   <div className="flex gap-4">
-                    <a href={project.liveDemo} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 py-3 bg-white text-black font-bold rounded-2xl hover:bg-primary transition-colors">
+                    <a href={project.liveDemo} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 dark:bg-white text-white dark:text-black font-bold rounded-2xl hover:bg-primary transition-colors">
                       Live <ExternalLink size={16} />
                     </a>
-                    <a href={project.githubLink} target="_blank" rel="noreferrer" className="p-3 glass rounded-2xl hover:bg-white/10 transition-colors">
+                    <a href={project.githubLink} target="_blank" rel="noreferrer" className="p-3 bg-gray-100 dark:glass rounded-2xl hover:bg-gray-200 dark:hover:bg-white/10 transition-colors dark:text-white">
                       <Github size={20} />
                     </a>
                   </div>
@@ -287,7 +285,7 @@ const Home = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <div>
             <h2 className="section-title text-left mb-8">Technical <span className="text-primary">Proficiency</span></h2>
-            <p className="text-gray-400 mb-10 text-lg leading-relaxed">
+            <p className="text-gray-600 dark:text-gray-400 mb-10 text-lg leading-relaxed">
               My expertise spans across the entire development lifecycle, from designing intuitive user interfaces to architecting robust server-side systems and managing scalable databases.
             </p>
             <div className="space-y-6">
@@ -296,7 +294,7 @@ const Home = () => {
                   <p className="text-sm font-bold uppercase tracking-widest text-primary mb-4">{category} Stack</p>
                   <div className="flex flex-wrap gap-3">
                     {skills?.filter(s => s.category === category).map(skill => (
-                      <span key={skill._id} className="px-5 py-2 glass rounded-full text-sm font-medium border border-white/5">
+                      <span key={skill._id} className="px-5 py-2 bg-gray-100 dark:glass rounded-full text-sm font-medium border border-gray-200 dark:border-white/5 text-gray-800 dark:text-gray-200">
                         {skill.name}
                       </span>
                     ))}
@@ -307,23 +305,23 @@ const Home = () => {
           </div>
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-6 pt-12">
-              <div className="p-8 glass-dark rounded-[40px] border border-white/5 flex flex-col items-center text-center">
+              <div className="p-8 bg-gray-50 dark:glass-dark rounded-[40px] border border-gray-200 dark:border-white/5 flex flex-col items-center text-center">
                 <Layout size={40} className="text-primary mb-4" />
-                <h4 className="font-bold">UI/UX Design</h4>
+                <h4 className="font-bold text-gray-900 dark:text-white">UI/UX Design</h4>
               </div>
-              <div className="p-8 glass-dark rounded-[40px] border border-white/5 flex flex-col items-center text-center">
+              <div className="p-8 bg-gray-50 dark:glass-dark rounded-[40px] border border-gray-200 dark:border-white/5 flex flex-col items-center text-center">
                 <Code size={40} className="text-primary mb-4" />
-                <h4 className="font-bold">Web Dev</h4>
+                <h4 className="font-bold text-gray-900 dark:text-white">Web Dev</h4>
               </div>
             </div>
             <div className="space-y-6">
-              <div className="p-8 glass-dark rounded-[40px] border border-white/5 flex flex-col items-center text-center">
+              <div className="p-8 bg-gray-50 dark:glass-dark rounded-[40px] border border-gray-200 dark:border-white/5 flex flex-col items-center text-center">
                 <Database size={40} className="text-primary mb-4" />
-                <h4 className="font-bold">Backend</h4>
+                <h4 className="font-bold text-gray-900 dark:text-white">Backend</h4>
               </div>
-              <div className="p-8 glass-dark rounded-[40px] border border-white/5 flex flex-col items-center text-center">
+              <div className="p-8 bg-gray-50 dark:glass-dark rounded-[40px] border border-gray-200 dark:border-white/5 flex flex-col items-center text-center">
                 <Layers size={40} className="text-primary mb-4" />
-                <h4 className="font-bold">Architecture</h4>
+                <h4 className="font-bold text-gray-900 dark:text-white">Architecture</h4>
               </div>
             </div>
           </div>
@@ -335,7 +333,7 @@ const Home = () => {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-20">
             <h2 className="section-title">Client <span className="text-primary">Feedback</span></h2>
-            <p className="text-gray-400">What partners and clients say about our collaboration.</p>
+            <p className="text-gray-600 dark:text-gray-400">What partners and clients say about our collaboration.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {testimonials.map((t, i) => (
@@ -344,19 +342,19 @@ const Home = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                className="p-10 glass-dark rounded-[40px] border border-white/5 relative"
+                className="p-10 bg-gray-50 dark:glass-dark rounded-[40px] border border-gray-200 dark:border-white/5 relative"
               >
                 <Quote className="absolute top-8 right-10 text-primary opacity-20" size={48} />
                 <div className="flex gap-1 mb-6">
                   {[...Array(t.stars)].map((_, idx) => <Star key={idx} size={16} className="fill-primary text-primary" />)}
                 </div>
-                <p className="text-gray-300 italic mb-8 leading-relaxed">"{t.content}"</p>
+                <p className="text-gray-700 dark:text-gray-300 italic mb-8 leading-relaxed">"{t.content}"</p>
                 <div className="flex items-center gap-4">
                   {t.image && (
                     <img src={t.image} alt={t.name} className="w-12 h-12 rounded-full object-cover border-2 border-primary" />
                   )}
                   <div>
-                    <h4 className="font-bold text-white">{t.name}</h4>
+                    <h4 className="font-bold text-gray-900 dark:text-white">{t.name}</h4>
                     <p className="text-xs text-primary">{t.role}{t.company ? ` @ ${t.company}` : ''}</p>
                   </div>
                 </div>
@@ -368,15 +366,15 @@ const Home = () => {
 
       {/* CTA Section */}
       <section className="max-w-5xl mx-auto px-4">
-        <div className="relative glass-dark p-12 md:p-20 rounded-[60px] border border-primary/20 overflow-hidden text-center">
+        <div className="relative bg-gray-900 dark:glass-dark p-12 md:p-20 rounded-[60px] border border-primary/20 overflow-hidden text-center shadow-2xl">
           <div className="absolute top-0 left-0 w-full h-full bg-primary/5 -z-10"></div>
-          <h2 className="text-4xl md:text-6xl font-black mb-8">Ready to start your <br /><span className="text-primary">next big project?</span></h2>
-          <p className="text-gray-400 text-lg mb-12 max-w-xl mx-auto">Let's collaborate to build something exceptional that stands out in the digital landscape.</p>
+          <h2 className="text-4xl md:text-6xl font-black mb-8 text-white">Ready to start your <br /><span className="text-primary">next big project?</span></h2>
+          <p className="text-gray-300 dark:text-gray-400 text-lg mb-12 max-w-xl mx-auto">Let's collaborate to build something exceptional that stands out in the digital landscape.</p>
           <div className="flex flex-wrap justify-center gap-6">
             <Link to="/contact" className="btn-primary h-16 px-12 flex items-center gap-2 text-lg">
               Get In Touch <Send size={20} />
             </Link>
-            <a href="mailto:esron@example.com" className="h-16 px-12 glass rounded-2xl flex items-center justify-center font-bold hover:bg-white/10 transition-all text-lg">
+            <a href="mailto:esront21@gmail.com" className="h-16 px-12 bg-white/10 dark:glass rounded-2xl flex items-center justify-center font-bold hover:bg-white/20 transition-all text-lg text-white">
               Send Email
             </a>
           </div>
