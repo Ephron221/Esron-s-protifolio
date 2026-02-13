@@ -15,7 +15,8 @@ import {
   FileText,
   ExternalLink,
   Bell,
-  Search
+  Search,
+  ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
@@ -40,6 +41,7 @@ const DashboardLayout = () => {
     { name: 'Skills', path: '/admin/skills', icon: Settings },
     { name: 'Services', path: '/admin/services', icon: Layers },
     { name: 'Manage CV', path: '/admin/cv', icon: FileText },
+    { name: 'Documents', path: '/admin/documents', icon: ShieldCheck },
     { name: 'Messages', path: '/admin/contacts', icon: MessageSquare },
   ];
 

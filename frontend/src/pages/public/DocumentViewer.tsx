@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api, { BASE_URL } from '../../services/api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -14,27 +15,27 @@ import {
   RefreshCcw,
   AlertTriangle
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
-const CVViewer = () => {
+const DocumentViewer = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const [zoom, setZoom] = useState(100);
   const [isFullHeight, setIsFullHeight] = useState(false);
 
-  const { data, isLoading } = useQuery(['cv'], async () => {
-    const { data } = await api.get('/cv');
-    return data;
+  const { data: document, isLoading } = useQuery(['document', id], async () => {
+    const { data } = await api.get(`/documents`);
+    return data.find((doc: any) => doc._id === id);
   });
 
   useEffect(() => {
-    // 1. Disable Right-Click
+    // Disable Right-Click
     const handleContextMenu = (e: MouseEvent) => e.preventDefault();
     
-    // 2. Disable Print/Save Keyboard Shortcuts
+    // Disable Print/Save Keyboard Shortcuts
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && ['p', 's', 'u', 'c'].includes(e.key.toLowerCase())) {
         e.preventDefault();
-        alert('Security Alert: Downloading and printing this CV is disabled.');
+        alert('Security Alert: This document is view-only protected.');
       }
     };
 
@@ -47,9 +48,21 @@ const CVViewer = () => {
   }, []);
 
   if (isLoading) return <LoadingSpinner />;
+  if (!document) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-center p-4">
+        <ShieldAlert size={64} className="text-red-500 mb-4" />
+        <h2 className="text-2xl font-bold mb-2">Document Not Found</h2>
+        <button onClick={() => navigate(-1)} className="btn-primary mt-4 flex items-center gap-2">
+          <ChevronLeft size={20} /> Back to Portfolio
+        </button>
+      </div>
+    );
+  }
 
-  const dummyCV = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
-  const displayUrl = data?.fileUrl ? `${BASE_URL}${data.fileUrl}` : dummyCV;
+  const fileUrl = document.fileUrl.startsWith('http') 
+    ? document.fileUrl 
+    : `${BASE_URL}${document.fileUrl}`;
 
   return (
     <div className="min-h-screen pt-24 pb-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-black transition-colors duration-500">
@@ -64,14 +77,14 @@ const CVViewer = () => {
               <ChevronLeft size={18} /> Back
             </button>
             <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
-              Curriculum <span className="text-primary">Vitae</span>
+              {document.title}
             </h1>
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1 bg-yellow-500/10 text-yellow-500 rounded-full text-[10px] font-black uppercase tracking-widest border border-yellow-500/20">
-                View-Only Mode
+              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/20">
+                Protected {document.type}
               </span>
               <span className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase">
-                <ShieldCheck size={12} className="text-green-500" /> Bio-Metric Protected
+                <ShieldCheck size={12} className="text-green-500" /> Encrypted Access
               </span>
             </div>
           </div>
@@ -110,14 +123,14 @@ const CVViewer = () => {
         <div className="mb-8 p-4 bg-primary/5 border border-primary/10 rounded-2xl flex items-start gap-4">
           <Lock className="text-primary shrink-0 mt-1" size={20} />
           <div>
-            <p className="text-sm font-bold text-primary uppercase tracking-wider mb-1">Advanced Protection Enabled</p>
+            <p className="text-sm font-bold text-primary uppercase tracking-wider mb-1">Secure Viewing Mode</p>
             <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-              This document is rendered via a secure encrypted buffer. Mobile device capture and background downloading are restricted to protect intellectual property.
+              This {document.type.toLowerCase()} is digitally protected. Mobile capture and background downloading are restricted to protect intellectual property.
             </p>
           </div>
         </div>
 
-        {/* SECURE CV CONTAINER */}
+        {/* SECURE VIEWER CONTAINER */}
         <div className="relative group">
           <motion.div 
             layout
@@ -133,7 +146,7 @@ const CVViewer = () => {
             <div className="absolute inset-0 z-20 pointer-events-none opacity-[0.03] dark:opacity-[0.05] flex flex-wrap gap-24 p-24 overflow-hidden rotate-[-20deg] select-none">
               {[...Array(30)].map((_, i) => (
                 <span key={i} className="text-5xl font-black whitespace-nowrap text-black dark:text-white uppercase tracking-widest">
-                  ESRON PORTFOLIO PROTECTED CV
+                  ESRON PORTFOLIO PROTECTED DOCUMENT
                 </span>
               ))}
             </div>
@@ -141,13 +154,13 @@ const CVViewer = () => {
             {/* Document Rendering Area */}
             <div className="w-full h-full overflow-auto custom-scrollbar bg-gray-200 flex justify-center p-4 lg:p-10">
               <iframe
-                src={`${displayUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                src={`${fileUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
                 className="w-full h-full border-none shadow-2xl transition-transform duration-300 origin-top"
                 style={{ 
                   transform: `scale(${zoom / 100})`,
                   minHeight: isFullHeight ? '170vh' : '100%'
                 }}
-                title="Protected CV Viewer"
+                title="Protected Document Viewer"
               />
             </div>
 
@@ -167,9 +180,8 @@ const CVViewer = () => {
             Printing and downloading are restricted by the owner.
           </p>
           <p className="text-xs max-w-lg leading-relaxed">
-            Unauthorized duplication or distribution of this CV is strictly prohibited. 
-            If you need a copy for recruitment, please contact me through the 
-            <a href="/contact" className="text-primary font-bold hover:underline ml-1">Contact Page</a>.
+            Unauthorized duplication or distribution of this {document.type.toLowerCase()} is strictly prohibited. 
+            Request an official copy via the <a href="/contact" className="text-primary font-bold hover:underline ml-1">Contact Page</a>.
           </p>
         </div>
       </div>
@@ -177,4 +189,4 @@ const CVViewer = () => {
   );
 };
 
-export default CVViewer;
+export default DocumentViewer;

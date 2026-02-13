@@ -14,6 +14,8 @@ const Services = lazy(() => import('./pages/public/Services'));
 const Skills = lazy(() => import('./pages/public/Skills'));
 const Contact = lazy(() => import('./pages/public/Contact'));
 const CVViewer = lazy(() => import('./pages/public/CVViewer'));
+const Documents = lazy(() => import('./pages/public/Documents'));
+const DocumentViewer = lazy(() => import('./pages/public/DocumentViewer'));
 
 // Admin Pages
 const Login = lazy(() => import('./pages/admin/Login'));
@@ -26,6 +28,7 @@ const ManageSkills = lazy(() => import('./pages/admin/ManageSkills'));
 const ManageServices = lazy(() => import('./pages/admin/ManageServices'));
 const ManageContacts = lazy(() => import('./pages/admin/ManageContacts'));
 const ManageCV = lazy(() => import('./pages/admin/ManageCV'));
+const ManageDocuments = lazy(() => import('./pages/admin/ManageDocuments'));
 
 function App() {
   const location = useLocation();
@@ -46,6 +49,8 @@ function App() {
             <Route path="/skills" element={<Skills />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/cv" element={<CVViewer />} />
+            <Route path="/documents" element={<Documents />} />
+            <Route path="/document/:id" element={<DocumentViewer />} />
 
             {/* Admin Auth */}
             <Route path="/admin/login" element={<Login />} />
@@ -62,6 +67,7 @@ function App() {
                 <Route path="services" element={<ManageServices />} />
                 <Route path="contacts" element={<ManageContacts />} />
                 <Route path="cv" element={<ManageCV />} />
+                <Route path="documents" element={<ManageDocuments />} />
               </Route>
             </Route>
           </Routes>

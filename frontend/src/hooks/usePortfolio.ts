@@ -43,3 +43,10 @@ export const useTestimonials = () => {
     return data;
   });
 };
+
+export const useDocuments = () => {
+  return useQuery(['documents'], async () => {
+    const { data } = await api.get('/documents');
+    return data;
+  });
+};

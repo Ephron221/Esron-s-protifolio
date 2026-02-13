@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth.routes');
 const homeRoutes = require('./routes/home.routes');
 const aboutRoutes = require('./routes/about.routes');
@@ -12,8 +13,12 @@ const cvRoutes = require('./routes/cv.routes');
 const uploadRoutes = require('./routes/upload.routes');
 const testimonialRoutes = require('./routes/testimonial.routes');
 const chatbotRoutes = require('./routes/chatbot.routes');
+const documentRoutes = require('./routes/document.routes');
 
 const app = express();
+
+// Connect Database
+connectDB();
 
 // Middleware
 app.use(cors());
@@ -35,6 +40,7 @@ app.use('/api/cv', cvRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/documents', documentRoutes);
 
 app.get('/', (req, res) => {
   res.send('Esron Portfolio API is running...');

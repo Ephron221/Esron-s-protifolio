@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { useHome, useProjects, useServices, useSkills, useTestimonials } from '../../hooks/usePortfolio';
+import { useHome, useProjects, useServices, useSkills, useTestimonials, useDocuments } from '../../hooks/usePortfolio';
 import { BASE_URL } from '../../services/api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { 
@@ -18,7 +18,10 @@ import {
   Database, 
   Layout, 
   Star,
-  Quote
+  Quote,
+  Award,
+  ShieldCheck,
+  Eye
 } from 'lucide-react';
 
 const iconMap: Record<string, any> = {
@@ -83,13 +86,14 @@ const Home = () => {
   const { data: services, isLoading: servicesLoading } = useServices();
   const { data: skills, isLoading: skillsLoading } = useSkills();
   const { data: testimonials, isLoading: testimonialsLoading } = useTestimonials();
+  const { data: documents, isLoading: docsLoading } = useDocuments();
 
-  if (homeLoading || projectsLoading || servicesLoading || skillsLoading || testimonialsLoading) {
+  if (homeLoading || projectsLoading || servicesLoading || skillsLoading || testimonialsLoading || docsLoading) {
     return <LoadingSpinner />;
   }
 
   const validRoles = homeData?.roles?.filter((r: string) => r && r.trim() !== '') || [];
-
+  
   const heroData = {
     title: homeData?.title || "Hi, I'm Esron",
     description: homeData?.description || "I build modern, scalable, and interactive digital experiences with passion and precision.",
@@ -109,24 +113,24 @@ const Home = () => {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-16">
-            <motion.div
+            <motion.div 
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8 }}
               className="flex-1 text-center lg:text-left"
             >
-              <motion.span
+              <motion.span 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="inline-block text-primary font-bold tracking-[0.2em] uppercase mb-6 text-sm py-1 px-3 border border-primary/20 rounded-full bg-primary/5"
               >
                 Available for new projects
               </motion.span>
-
+              
               <h1 className="text-6xl md:text-8xl font-black mb-4 leading-none tracking-tighter text-gray-900 dark:text-white">
                 {heroData.title}
               </h1>
-
+              
               <Typewriter texts={heroData.roles} />
 
               <p className="text-xl text-gray-600 dark:text-gray-400 mt-10 mb-12 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
@@ -135,7 +139,7 @@ const Home = () => {
 
               <div className="flex flex-wrap gap-5 justify-center lg:justify-start mb-12">
                 <Link to="/projects" className="btn-primary flex items-center gap-2 h-14 px-8 group">
-                  Explore Work
+                  Explore Work 
                   <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />
                 </Link>
                 <Link to="/cv" className="btn-secondary flex items-center gap-2 h-14 px-8 group">
@@ -156,7 +160,7 @@ const Home = () => {
               </div>
             </motion.div>
 
-            <motion.div
+            <motion.div 
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1 }}
@@ -165,9 +169,9 @@ const Home = () => {
               <div className="relative w-72 h-72 md:w-[450px] md:h-[450px] mx-auto">
                 <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping blur-3xl opacity-20"></div>
                 <div className="relative w-full h-full rounded-3xl border-2 border-primary/30 p-3 overflow-hidden bg-white dark:bg-[#0A0A0A] rotate-3 hover:rotate-0 transition-transform duration-700 shadow-[0_0_50px_rgba(0,255,255,0.1)]">
-                  <img
-                    src={heroData.profileImage}
-                    alt="Esron Profile"
+                  <img 
+                    src={heroData.profileImage} 
+                    alt="Esron Profile" 
                     className="w-full h-full object-cover rounded-2xl grayscale hover:grayscale-0 transition-all duration-700"
                   />
                 </div>
@@ -176,7 +180,7 @@ const Home = () => {
           </div>
 
           {heroData.statistics.length > 0 && (
-            <motion.div
+            <motion.div 
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -249,8 +253,8 @@ const Home = () => {
                 className="group relative bg-white dark:bg-[#0A0A0A] rounded-[40px] overflow-hidden border border-gray-200 dark:border-white/5 shadow-2xl"
               >
                 <div className="aspect-[16/10] overflow-hidden">
-                  <img
-                    src={project.image.startsWith('http') ? project.image : `${BASE_URL}${project.image}`}
+                  <img 
+                    src={project.image.startsWith('http') ? project.image : `${BASE_URL}${project.image}`} 
                     alt={project.title}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
@@ -279,6 +283,50 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* Documents Showcase Section */}
+      {documents && documents.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 border-y border-gray-100 dark:border-white/5">
+          <div className="text-center mb-20">
+            <h2 className="section-title">Certifications & <span className="text-primary">Awards</span></h2>
+            <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">Verified professional credentials and academic achievements.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {documents.map((doc: any, index: number) => (
+              <motion.div
+                key={doc._id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="bg-gray-50 dark:glass-dark p-8 rounded-[32px] border border-gray-200 dark:border-white/5 relative group overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 p-6 text-primary/10 group-hover:scale-110 transition-transform">
+                  <ShieldCheck size={80} />
+                </div>
+                
+                <div className="p-3 bg-primary/10 rounded-2xl text-primary w-fit mb-6">
+                  {doc.type === 'Certificate' ? <Award size={24} /> : <FileText size={24} />}
+                </div>
+
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 leading-tight">{doc.title}</h3>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-4 block">{doc.type}</span>
+                <p className="text-gray-500 text-xs mb-8 line-clamp-2">{doc.description}</p>
+
+                <Link 
+                  to="/documents"
+                  state={{ docId: doc._id }}
+                  className="w-full py-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 group-hover:bg-primary group-hover:text-black group-hover:border-primary transition-all"
+                >
+                  <Eye size={14} />
+                  View Securely
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Skills / Tech Stack Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -337,7 +385,7 @@ const Home = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {testimonials.map((t, i) => (
-              <motion.div
+              <motion.div 
                 key={t._id}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
