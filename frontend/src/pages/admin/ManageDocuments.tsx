@@ -22,7 +22,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const ManageDocuments = () => {
   const queryClient = useQueryClient();
@@ -33,6 +33,7 @@ const ManageDocuments = () => {
   const [previewDoc, setPreviewDoc] = useState<any>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   useEffect(() => {
     const container = pdfContainerRef.current;
@@ -48,7 +49,6 @@ const ManageDocuments = () => {
       resizeObserver.disconnect();
     };
   }, [previewDoc]);
-
 
   const [formData, setFormData] = useState({
     title: '',
@@ -132,9 +132,12 @@ const ManageDocuments = () => {
   
   function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
     setNumPages(numPages);
+    setPdfError(null);
   }
-  
-  const proxyUrl = (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+
+  function onDocumentLoadError(error: Error): void {
+    setPdfError(`Failed to load document. Please ensure the file URL is correct and accessible. Error: ${error.message}`);
+  }
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -241,7 +244,7 @@ const ManageDocuments = () => {
                 <button onClick={() => setPreviewDoc(null)} className="p-2 hover:bg-white/5 rounded-full text-gray-500 transition-all"><X size={24} /></button>
               </div>
 
-              <div ref={pdfContainerRef} className="flex-1 bg-zinc-900 relative overflow-auto group">
+              <div ref={pdfContainerRef} className="flex-1 bg-zinc-900 relative overflow-auto group custom-scrollbar">
                 <div className="absolute inset-0 z-30 pointer-events-none select-none touch-none" />
                 <div className="absolute inset-0 z-20 pointer-events-none opacity-[0.03] flex flex-wrap gap-20 p-20 overflow-hidden rotate-[-15deg]">
                   {[...Array(15)].map((_, i) => (
@@ -251,23 +254,28 @@ const ManageDocuments = () => {
                 
                 {previewDoc.fileUrl && containerWidth > 0 ? (
                   <Document
-                    file={proxyUrl(`${BASE_URL}${previewDoc.fileUrl}`)}
+                    file={`${BASE_URL}${previewDoc.fileUrl}`}
                     onLoadSuccess={onDocumentLoadSuccess}
+                    onLoadError={onDocumentLoadError}
                     loading={<LoadingSpinner />}
                     className="flex flex-col items-center py-4"
                     onContextMenu={(e) => e.preventDefault()}
                   >
-                    {Array.from(new Array(numPages), (el, index) => (
-                      <Page
-                        key={`page_${index + 1}`}
-                        pageNumber={index + 1}
-                        width={containerWidth}
-                        renderTextLayer={false}
-                        renderAnnotationLayer={false}
-                        className="mb-4 shadow-lg"
-                        onContextMenu={(e) => e.preventDefault()}
-                      />
-                    ))}
+                    {pdfError ? (
+                      <div className="text-red-500 p-8">{pdfError}</div>
+                    ) : (
+                      Array.from(new Array(numPages), (el, index) => (
+                        <Page
+                          key={`page_${index + 1}`}
+                          pageNumber={index + 1}
+                          width={containerWidth}
+                          renderTextLayer={false}
+                          renderAnnotationLayer={false}
+                          className="mb-4 shadow-lg"
+                          onContextMenu={(e) => e.preventDefault()}
+                        />
+                      ))
+                    )}
                   </Document>
                 ) : <div className='w-full h-full flex items-center justify-center text-gray-500'><p>Could not load document.</p></div>}
 
