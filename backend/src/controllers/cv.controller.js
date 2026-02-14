@@ -1,37 +1,49 @@
 const CV = require('../models/CV');
+const asyncHandler = require('express-async-handler');
 
-const getCV = async (req, res) => {
-  try {
-    const cv = await CV.findOne();
+// @desc    Get the single CV
+// @route   GET /api/cv
+// @access  Public
+const getCV = asyncHandler(async (req, res) => {
+  // Using findOne() ensures that we always get a single object or null.
+  const cv = await CV.findOne({}); 
+  
+  if (cv) {
     res.json(cv);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } else {
+    // It's better to send a 404 if no CV is found, but for now,
+    // returning an empty object is safer for the existing frontend.
+    res.status(404).json({ message: 'No CV has been uploaded.' });
   }
-};
+});
 
-const uploadCV = async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ message: 'Please upload a file' });
-    }
-
-    const fileUrl = `/${req.file.path.replace(/\\/g, '/')}`;
-    let cv = await CV.findOne();
-
-    if (cv) {
-      cv.fileUrl = fileUrl;
-      cv.lastUpdated = Date.now();
-      const updatedCV = await cv.save();
-      res.json(updatedCV);
-    } else {
-      const newCV = await CV.create({
-        fileUrl
-      });
-      res.status(201).json(newCV);
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+// @desc    Upload or replace the CV
+// @route   POST /api/cv/upload
+// @access  Private
+const uploadCV = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    res.status(400);
+    throw new Error('No file uploaded.');
   }
-};
+
+  // There should only ever be one CV document in the collection.
+  // Find it and update it, or create a new one if it doesn't exist.
+  let cv = await CV.findOne({});
+
+  if (cv) {
+    // Update existing CV
+    cv.fileUrl = `/uploads/${req.file.filename}`;
+    cv.lastUpdated = Date.now();
+  } else {
+    // Create new CV
+    cv = new CV({
+      fileUrl: `/uploads/${req.file.filename}`,
+      user: req.user._id, // Assuming you have a user associated with the CV
+    });
+  }
+
+  const updatedCV = await cv.save();
+  res.status(201).json(updatedCV);
+});
 
 module.exports = { getCV, uploadCV };

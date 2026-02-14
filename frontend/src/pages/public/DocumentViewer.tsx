@@ -44,7 +44,7 @@ const DocumentViewer = () => {
     return () => resizeObserver.disconnect();
   }, []);
 
-  // --- THIS IS THE DEFINITIVE FIX ---
+  // --- DEFINITIVE DATA FETCHING FIX ---
   // This data fetching logic now mirrors the working CVViewer component
   // and uses the correct, dedicated API endpoint for a single document.
   const { data: document, isLoading, isError, error } = useQuery(
