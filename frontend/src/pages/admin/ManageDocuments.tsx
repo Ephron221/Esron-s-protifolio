@@ -46,15 +46,6 @@ const ManageDocuments = () => {
     return () => resizeObserver.disconnect();
   }, [previewDoc]);
 
-  // --- ADDED FOR EXTRA DEBUGGING ---
-  useEffect(() => {
-    if(previewDoc) {
-        console.log("--- MODAL PREVIEW INITIALIZED ---");
-        console.log("Document to preview:", previewDoc);
-        console.log("Constructed URL for PDF Viewer:", `${BASE_URL}${previewDoc.fileUrl}`);
-    }
-  }, [previewDoc]);
-
   const [formData, setFormData] = useState({
     title: '',
     type: 'Certificate',
