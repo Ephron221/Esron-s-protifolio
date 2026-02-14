@@ -18,6 +18,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
+// Setup for PDF.js worker, essential for it to work
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const DocumentViewer = () => {
@@ -30,6 +31,7 @@ const DocumentViewer = () => {
   const [zoom, setZoom] = useState(1);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
+  // Make viewer responsive to container size
   useEffect(() => {
     const container = pdfContainerRef.current;
     if (!container) return;
@@ -40,25 +42,27 @@ const DocumentViewer = () => {
     return () => resizeObserver.disconnect();
   }, []);
 
+  // Fetch the specific document data using its ID
   const { data: document, isLoading, isError, error } = useQuery(['document', id], async () => {
-    if (!id) throw new Error("No document ID provided.");
-    // This is inefficient but matches the previous logic. A dedicated /api/documents/:id endpoint would be better.
-    const { data } = await api.get(`/documents`);
+    if (!id) throw new Error("No document ID provided in URL.");
+    // In a real app, this should be a direct API call like `/api/documents/${id}`
+    const { data } = await api.get(`/documents`); 
     const doc = data.find((d: any) => d._id === id);
     if (!doc) {
-      throw new Error(`Document with ID ${id} not found.`);
+      throw new Error(`Document with ID ${id} could not be found.`);
     }
     return doc;
   }, {
-    retry: false,
+    retry: false, // Don't retry if the document is not found
   });
 
+  // Apply security features
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => e.preventDefault();
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && ['p', 's', 'u', 'c'].includes(e.key.toLowerCase())) {
         e.preventDefault();
-        alert('Security Alert: This action is disabled.');
+        alert('Security Alert: This action is disabled to protect the document.');
       }
     };
     window.addEventListener('contextmenu', handleContextMenu);
@@ -69,27 +73,25 @@ const DocumentViewer = () => {
     };
   }, []);
 
+  // PDF load handlers
   function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
     setNumPages(numPages);
     setPdfError(null);
   }
 
   function onDocumentLoadError(error: Error): void {
-    setPdfError(`Failed to load PDF. Message: ${error.message}`);
+    console.error("Public Document PDF Load Error:", error.message);
+    setPdfError(`Failed to load PDF document. Message: ${error.message}`);
   }
 
   const fileUrl = document?.fileUrl ? `${BASE_URL}${document.fileUrl}` : '';
 
+  // Main render logic
   const renderContent = () => {
-    if (isLoading) {
-      return <LoadingSpinner />;
-    }
-    if (isError) {
-      return <div className="w-full h-full flex flex-col items-center justify-center text-red-500 p-4 text-center"><ShieldAlert size={48} className="mb-4" /><h2 className="text-xl font-bold">Error Loading Document</h2><p>{error instanceof Error ? error.message : 'An unknown error occurred'}</p></div>;
-    }
-    if (pdfError) {
-      return <div className="w-full h-full flex items-center justify-center text-red-500 p-4"><p>{pdfError}</p></div>;
-    }
+    if (isLoading) return <LoadingSpinner />;
+    if (isError) return <div className="w-full h-full flex flex-col items-center justify-center text-red-500 p-4 text-center"><ShieldAlert size={48} className="mb-4" /><h2 className="text-xl font-bold">Error Loading Document</h2><p>{error instanceof Error ? error.message : 'An unknown error occurred'}</p></div>;
+    if (pdfError) return <div className="w-full h-full flex items-center justify-center text-red-500 p-4 text-center"><AlertTriangle size={48} className="mb-4"/><p>{pdfError}</p></div>;
+    
     if (fileUrl && containerWidth > 0) {
       return (
         <Document
@@ -115,19 +117,21 @@ const DocumentViewer = () => {
         </Document>
       );
     }
+
     return <div className="w-full h-full flex items-center justify-center text-gray-500"><p>Document not found or URL is invalid.</p></div>;
   };
 
   return (
     <div className="min-h-screen pt-24 pb-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-black transition-colors duration-500">
       <div className="max-w-6xl mx-auto">
+        {/* Header & Toolbar */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
           <div className="space-y-2">
             <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors font-bold text-sm mb-4">
               <ChevronLeft size={18} /> Back
             </button>
             <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
-              {document?.title || 'Document'}
+              {document?.title || 'Document Viewer'}
             </h1>
             <div className="flex items-center gap-2">
               <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/20">
@@ -143,14 +147,16 @@ const DocumentViewer = () => {
           </div>
         </div>
 
+        {/* Security Banner */}
         <div className="mb-8 p-4 bg-primary/5 border border-primary/10 rounded-2xl flex items-start gap-4">
           <Lock className="text-primary shrink-0 mt-1" size={20} />
           <div>
             <p className="text-sm font-bold text-primary uppercase tracking-wider mb-1">Secure Viewing Mode</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">This document is digitally protected. Mobile capture and background downloading are restricted.</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">This document is digitally protected. Mobile capture, printing, and downloading are restricted.</p>
           </div>
         </div>
 
+        {/* SECURE VIEWER CONTAINER */}
         <div className="relative group">
           <motion.div
             layout
@@ -169,6 +175,7 @@ const DocumentViewer = () => {
           </motion.div>
         </div>
 
+        {/* Footer Warning */}
         <div className="mt-12 flex flex-col items-center gap-4 text-gray-500 text-center">
           <p className="flex items-center gap-2 text-sm font-medium"><AlertTriangle size={18} className="text-primary" /> Unauthorized distribution is prohibited.</p>
           <p className="text-xs max-w-lg leading-relaxed">Request an official copy via the <a href="/contact" className="text-primary font-bold hover:underline ml-1">Contact Page</a>.</p>
