@@ -45,7 +45,6 @@ const DocumentViewer = () => {
   // Fetch the specific document data using its ID
   const { data: document, isLoading, isError, error } = useQuery(['document', id], async () => {
     if (!id) throw new Error("No document ID provided in URL.");
-    // In a real app, this should be a direct API call like `/api/documents/${id}`
     const { data } = await api.get(`/documents`); 
     const doc = data.find((d: any) => d._id === id);
     if (!doc) {
@@ -53,7 +52,7 @@ const DocumentViewer = () => {
     }
     return doc;
   }, {
-    retry: false, // Don't retry if the document is not found
+    retry: false,
   });
 
   // Apply security features
@@ -81,7 +80,7 @@ const DocumentViewer = () => {
 
   function onDocumentLoadError(error: Error): void {
     console.error("Public Document PDF Load Error:", error.message);
-    setPdfError(`Failed to load PDF document. Message: ${error.message}`);
+    setPdfError(`Failed to load PDF. Message: ${error.message}`);
   }
 
   const fileUrl = document?.fileUrl ? `${BASE_URL}${document.fileUrl}` : '';
