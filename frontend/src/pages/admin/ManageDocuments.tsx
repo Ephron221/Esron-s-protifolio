@@ -13,7 +13,8 @@ import {
   Pencil,
   Eye,
   RefreshCcw,
-  Lock
+  Lock,
+  AlertTriangle
 } from 'lucide-react';
 import api, { BASE_URL } from '../../services/api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -38,16 +39,11 @@ const ManageDocuments = () => {
   useEffect(() => {
     const container = pdfContainerRef.current;
     if (!container) return;
-
     const resizeObserver = new ResizeObserver(() => {
       setContainerWidth(container.clientWidth);
     });
-
     resizeObserver.observe(container);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
+    return () => resizeObserver.disconnect();
   }, [previewDoc]);
 
   const [formData, setFormData] = useState({
@@ -136,8 +132,14 @@ const ManageDocuments = () => {
   }
 
   function onDocumentLoadError(error: Error): void {
-    setPdfError(`Failed to load document. Please ensure the file URL is correct and accessible. Error: ${error.message}`);
+    console.error("Admin PDF Load Error:", error.message);
+    setPdfError(`Failed to load PDF. Message: ${error.message}`);
   }
+
+  const handlePreview = (doc: any) => {
+    setPdfError(null); // Reset error state on new preview
+    setPreviewDoc(doc);
+  };
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -145,10 +147,8 @@ const ManageDocuments = () => {
     <div className="max-w-6xl mx-auto pb-20 px-4 relative">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-primary to-gray-500 bg-clip-text text-transparent">
-            Document Center
-          </h1>
-          <p className="text-gray-400 mt-2">View, edit, and manage your protected credentials.</p>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-primary to-gray-500 bg-clip-text text-transparent">Document Center</h1>
+          <p className="text-gray-400 mt-2">Manage your protected credentials.</p>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-xs font-bold border border-primary/20">
           <ShieldCheck size={14} /> <span>Security System Active</span>
@@ -170,7 +170,6 @@ const ManageDocuments = () => {
               {editingId ? <Pencil size={22} className="text-primary" /> : <Plus size={22} className="text-primary" />}
               {editingId ? 'Edit Document' : 'New Document'}
             </h2>
-            
             <div className="space-y-5">
               <input type="text" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 outline-none focus:border-primary/50 text-sm" placeholder="Title" />
               <select value={formData.type} onChange={(e) => setFormData({...formData, type: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 outline-none focus:border-primary/50 text-sm text-gray-300">
@@ -179,17 +178,15 @@ const ManageDocuments = () => {
                 <option value="Other">Other Award</option>
               </select>
               <textarea rows={3} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 outline-none focus:border-primary/50 text-sm resize-none" placeholder="Description"></textarea>
-              
               <div onClick={() => fileInputRef.current?.click()} className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${formData.fileUrl ? 'border-primary/50 bg-primary/5' : 'border-white/10 hover:border-primary/30'}`}>
                 {uploading ? <RefreshCcw className="mx-auto animate-spin text-primary" /> : formData.fileUrl ? <ShieldCheck className="mx-auto text-primary" size={32} /> : <Upload className="mx-auto text-gray-500" size={32} />}
                 <p className="text-[10px] mt-2 font-bold uppercase tracking-widest text-gray-500">{formData.fileUrl ? 'File Secured' : 'Upload File'}</p>
               </div>
-              <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
-
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".pdf" />
               <div className="flex gap-3">
                 {editingId && <button onClick={resetForm} className="flex-1 py-4 bg-white/5 text-white font-bold rounded-2xl hover:bg-white/10 transition-all">Cancel</button>}
-                <button onClick={() => saveMutation.mutate(formData)} disabled={!formData.title || !formData.fileUrl} className="flex-[2] py-4 bg-primary text-black font-black rounded-2xl hover:shadow-[0_0_20px_rgba(0,255,255,0.3)] transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                  <Save size={18} /> {editingId ? 'Update' : 'Save'}
+                <button onClick={() => saveMutation.mutate(formData)} disabled={!formData.title || !formData.fileUrl || saveMutation.isLoading} className="flex-[2] py-4 bg-primary text-black font-black rounded-2xl hover:shadow-[0_0_20px_rgba(0,255,255,0.3)] transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                  {saveMutation.isLoading ? <LoadingSpinner /> : <><Save size={18} /> {editingId ? 'Update' : 'Save'}</>}
                 </button>
               </div>
             </div>
@@ -202,37 +199,25 @@ const ManageDocuments = () => {
               <div className="flex justify-between items-start mb-4">
                 <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Award size={24} /></div>
                 <div className="flex gap-1">
-                  <button onClick={() => setPreviewDoc(doc)} className="p-2 text-gray-500 hover:text-primary transition-colors"><Eye size={18} /></button>
-                  <button onClick={() => handleEdit(doc)} className="p-2 text-gray-500 hover:text-blue-500 transition-colors"><Pencil size={18} /></button>
-                  <button onClick={() => deleteMutation.mutate(doc._id)} className="p-2 text-gray-500 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
+                  <button onClick={() => handlePreview(doc)} className="p-2 text-gray-500 hover:text-primary transition-colors" title="Preview"><Eye size={18} /></button>
+                  <button onClick={() => handleEdit(doc)} className="p-2 text-gray-500 hover:text-blue-500 transition-colors" title="Edit"><Pencil size={18} /></button>
+                  <button onClick={() => deleteMutation.mutate(doc._id)} className="p-2 text-gray-500 hover:text-red-500 transition-colors" title="Delete"><Trash2 size={18} /></button>
                 </div>
               </div>
               <h3 className="font-bold text-lg mb-1">{doc.title}</h3>
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-3 block">{doc.type}</span>
-              <p className="text-gray-500 text-xs line-clamp-2">{doc.description}</p>
+              <p className="text-gray-500 text-xs line-clamp-2 a-clamp-2">{doc.description}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* IN-DASHBOARD VIEWER MODAL */}
+      {/* --- DEFINITIVE PDF VIEWER MODAL --- */}
       <AnimatePresence>
         {previewDoc && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10">
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
-              onClick={() => setPreviewDoc(null)}
-              className="absolute inset-0 bg-black/90 backdrop-blur-sm" 
-            />
-            
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-5xl h-full max-h-[90vh] glass-dark rounded-[40px] border border-white/10 overflow-hidden flex flex-col shadow-2xl"
-            >
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10" onContextMenu={(e) => e.preventDefault()}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setPreviewDoc(null)} className="absolute inset-0 bg-black/90 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="relative w-full max-w-5xl h-full max-h-[90vh] glass-dark rounded-[40px] border border-white/10 overflow-hidden flex flex-col shadow-2xl">
               <div className="p-6 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="p-2 bg-primary/10 rounded-lg text-primary"><ShieldCheck size={20} /></div>
@@ -245,39 +230,31 @@ const ManageDocuments = () => {
               </div>
 
               <div ref={pdfContainerRef} className="flex-1 bg-zinc-900 relative overflow-auto group custom-scrollbar">
-                <div className="absolute inset-0 z-30 pointer-events-none select-none touch-none" />
                 <div className="absolute inset-0 z-20 pointer-events-none opacity-[0.03] flex flex-wrap gap-20 p-20 overflow-hidden rotate-[-15deg]">
-                  {[...Array(15)].map((_, i) => (
-                    <span key={i} className="text-4xl font-black whitespace-nowrap text-white uppercase">ESRON ADMIN PREVIEW</span>
-                  ))}
+                  {[...Array(15)].map((_, i) => (<span key={i} className="text-4xl font-black whitespace-nowrap text-white uppercase">ESRON ADMIN PREVIEW</span>))}
                 </div>
                 
-                {previewDoc.fileUrl && containerWidth > 0 ? (
+                {(previewDoc.fileUrl && containerWidth > 0) ? (
                   <Document
                     file={`${BASE_URL}${previewDoc.fileUrl}`}
                     onLoadSuccess={onDocumentLoadSuccess}
                     onLoadError={onDocumentLoadError}
                     loading={<LoadingSpinner />}
                     className="flex flex-col items-center py-4"
-                    onContextMenu={(e) => e.preventDefault()}
                   >
                     {pdfError ? (
-                      <div className="text-red-500 p-8">{pdfError}</div>
+                      <div className="text-red-400 p-8 bg-red-500/10 rounded-lg m-4 flex items-center gap-4"><AlertTriangle/> {pdfError}</div>
                     ) : (
                       Array.from(new Array(numPages), (el, index) => (
-                        <Page
-                          key={`page_${index + 1}`}
-                          pageNumber={index + 1}
-                          width={containerWidth}
-                          renderTextLayer={false}
-                          renderAnnotationLayer={false}
-                          className="mb-4 shadow-lg"
-                          onContextMenu={(e) => e.preventDefault()}
-                        />
+                        <Page key={`page_${index + 1}`} pageNumber={index + 1} width={containerWidth} renderTextLayer={false} renderAnnotationLayer={false} className="mb-4 shadow-lg" />
                       ))
                     )}
                   </Document>
-                ) : <div className='w-full h-full flex items-center justify-center text-gray-500'><p>Could not load document.</p></div>}
+                ) : (
+                  <div className='w-full h-full flex items-center justify-center text-gray-500 p-4'>
+                    <p>Document file not found or URL is invalid.</p>
+                  </div>
+                )}
 
                 <div className="absolute bottom-6 right-6 z-40 px-4 py-2 glass rounded-full border border-primary/20 flex items-center gap-2 backdrop-blur-xl">
                   <Lock size={12} className="text-primary" />
