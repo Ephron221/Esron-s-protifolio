@@ -3,13 +3,13 @@ import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import api, { BASE_URL } from '../../services/api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { 
-  ShieldAlert, 
-  Lock, 
-  ChevronLeft, 
-  ZoomIn, 
-  ZoomOut, 
-  Maximize2, 
+import {
+  ShieldAlert,
+  Lock,
+  ChevronLeft,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
   ShieldCheck,
   RefreshCcw,
   AlertTriangle
@@ -29,7 +29,7 @@ const CVViewer = () => {
   useEffect(() => {
     // 1. Disable Right-Click
     const handleContextMenu = (e: MouseEvent) => e.preventDefault();
-    
+
     // 2. Disable Print/Save Keyboard Shortcuts
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && ['p', 's', 'u', 'c'].includes(e.key.toLowerCase())) {
@@ -57,8 +57,8 @@ const CVViewer = () => {
         {/* Header & Interactive Toolbar */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
           <div className="space-y-2">
-            <button 
-              onClick={() => navigate(-1)} 
+            <button
+              onClick={() => navigate(-1)}
               className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors font-bold text-sm mb-4"
             >
               <ChevronLeft size={18} /> Back
@@ -78,7 +78,7 @@ const CVViewer = () => {
 
           {/* Interactive Viewer Toolbar */}
           <div className="flex items-center gap-2 bg-gray-100 dark:bg-white/5 p-2 rounded-2xl border border-gray-200 dark:border-white/10 self-start lg:self-center shadow-xl">
-            <button 
+            <button
               onClick={() => setZoom(prev => Math.max(50, prev - 10))}
               className="p-3 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-gray-600 dark:text-gray-300"
               title="Zoom Out"
@@ -88,7 +88,7 @@ const CVViewer = () => {
             <span className="px-4 text-sm font-black text-gray-900 dark:text-white min-w-[60px] text-center">
               {zoom}%
             </span>
-            <button 
+            <button
               onClick={() => setZoom(prev => Math.min(200, prev + 10))}
               className="p-3 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-gray-600 dark:text-gray-300"
               title="Zoom In"
@@ -96,7 +96,7 @@ const CVViewer = () => {
               <ZoomIn size={20} />
             </button>
             <div className="w-px h-8 bg-gray-200 dark:bg-white/10 mx-1" />
-            <button 
+            <button
               onClick={() => setIsFullHeight(!isFullHeight)}
               className={`p-3 rounded-xl transition-all flex items-center gap-2 ${isFullHeight ? 'bg-primary text-black' : 'hover:bg-white dark:hover:bg-white/10 text-gray-600 dark:text-gray-300'}`}
             >
@@ -119,16 +119,16 @@ const CVViewer = () => {
 
         {/* SECURE CV CONTAINER */}
         <div className="relative group">
-          <motion.div 
+          <motion.div
             layout
             className={`relative bg-white dark:bg-zinc-900 rounded-[40px] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.3)] border-4 border-gray-100 dark:border-white/5 transition-all duration-500 ease-in-out ${isFullHeight ? 'h-[180vh]' : 'h-[80vh]'}`}
           >
             {/* INVISIBLE PROTECTION LAYER (CRITICAL FOR MOBILE) */}
-            <div 
-              className="absolute inset-0 z-30 pointer-events-none select-none touch-pan-y" 
+            <div
+              className="absolute inset-0 z-30 pointer-events-none select-none touch-pan-y"
               onContextMenu={(e) => e.preventDefault()}
             />
-            
+
             {/* DYNAMIC WATERMARK GRID */}
             <div className="absolute inset-0 z-20 pointer-events-none opacity-[0.03] dark:opacity-[0.05] flex flex-wrap gap-24 p-24 overflow-hidden rotate-[-20deg] select-none">
               {[...Array(30)].map((_, i) => (
@@ -143,7 +143,7 @@ const CVViewer = () => {
               <iframe
                 src={`${displayUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
                 className="w-full h-full border-none shadow-2xl transition-transform duration-300 origin-top"
-                style={{ 
+                style={{
                   transform: `scale(${zoom / 100})`,
                   minHeight: isFullHeight ? '170vh' : '100%'
                 }}
@@ -167,8 +167,8 @@ const CVViewer = () => {
             Printing and downloading are restricted by the owner.
           </p>
           <p className="text-xs max-w-lg leading-relaxed">
-            Unauthorized duplication or distribution of this CV is strictly prohibited. 
-            If you need a copy for recruitment, please contact me through the 
+            Unauthorized duplication or distribution of this CV is strictly prohibited.
+            If you need a copy for recruitment, please contact me through the
             <a href="/contact" className="text-primary font-bold hover:underline ml-1">Contact Page</a>.
           </p>
         </div>
