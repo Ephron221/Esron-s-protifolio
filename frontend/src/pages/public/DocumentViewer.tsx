@@ -45,6 +45,7 @@ const DocumentViewer = () => {
   // Fetch the specific document data using its ID
   const { data: document, isLoading, isError, error } = useQuery(['document', id], async () => {
     if (!id) throw new Error("No document ID provided in URL.");
+    // This is inefficient but matches the original logic. A dedicated /api/documents/:id endpoint would be better.
     const { data } = await api.get(`/documents`); 
     const doc = data.find((d: any) => d._id === id);
     if (!doc) {
@@ -52,7 +53,7 @@ const DocumentViewer = () => {
     }
     return doc;
   }, {
-    retry: false,
+    retry: false, // Don't retry if the document is not found
   });
 
   // Apply security features
