@@ -18,6 +18,9 @@ import {
 import api, { BASE_URL } from '../../services/api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Document, Page, pdfjs } from 'react-pdf';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const ManageDocuments = () => {
   const queryClient = useQueryClient();
@@ -25,6 +28,8 @@ const ManageDocuments = () => {
   
   const [editingId, setEditingId] = useState<string | null>(null);
   const [previewDoc, setPreviewDoc] = useState<any>(null);
+  const [numPages, setNumPages] = useState<number | null>(null);
+
   const [formData, setFormData] = useState({
     title: '',
     type: 'Certificate',
@@ -104,6 +109,10 @@ const ManageDocuments = () => {
       uploadMutation.mutate(e.target.files[0]);
     }
   };
+  
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
+    setNumPages(numPages);
+  }
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -210,7 +219,7 @@ const ManageDocuments = () => {
                 <button onClick={() => setPreviewDoc(null)} className="p-2 hover:bg-white/5 rounded-full text-gray-500 transition-all"><X size={24} /></button>
               </div>
 
-              <div className="flex-1 bg-zinc-900 relative overflow-hidden group">
+              <div className="flex-1 bg-zinc-900 relative overflow-auto group">
                 <div className="absolute inset-0 z-30 pointer-events-none select-none touch-none" />
                 <div className="absolute inset-0 z-20 pointer-events-none opacity-[0.03] flex flex-wrap gap-20 p-20 overflow-hidden rotate-[-15deg]">
                   {[...Array(15)].map((_, i) => (
@@ -218,11 +227,16 @@ const ManageDocuments = () => {
                   ))}
                 </div>
                 
-                <iframe 
-                  src={`${previewDoc.fileUrl.startsWith('http') ? previewDoc.fileUrl : `${BASE_URL}${previewDoc.fileUrl}`}#toolbar=0&navpanes=0`}
-                  className="w-full h-full border-none bg-white"
-                  title="Admin Secure Preview"
-                />
+                <Document
+                  file={`${previewDoc.fileUrl.startsWith('http') ? previewDoc.fileUrl : `${BASE_URL}${previewDoc.fileUrl}`}`}
+                  onLoadSuccess={onDocumentLoadSuccess}
+                  className="flex justify-center"
+                  loading={<LoadingSpinner />}
+                >
+                  {Array.from(new Array(numPages), (el, index) => (
+                    <Page key={`page_${index + 1}`} pageNumber={index + 1} renderTextLayer={false} renderAnnotationLayer={false} width={800} />
+                  ))}
+                </Document>
 
                 <div className="absolute bottom-6 right-6 z-40 px-4 py-2 glass rounded-full border border-primary/20 flex items-center gap-2 backdrop-blur-xl">
                   <Lock size={12} className="text-primary" />
