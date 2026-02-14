@@ -42,16 +42,12 @@ const DocumentViewer = () => {
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Fetch the specific document data using its ID
+  // --- DEFINITIVE DATA FETCHING FIX ---
+  // Use the dedicated endpoint to fetch a single document by its ID.
   const { data: document, isLoading, isError, error } = useQuery(['document', id], async () => {
     if (!id) throw new Error("No document ID provided in URL.");
-    // This is inefficient but matches the original logic. A dedicated /api/documents/:id endpoint would be better.
-    const { data } = await api.get(`/documents`); 
-    const doc = data.find((d: any) => d._id === id);
-    if (!doc) {
-      throw new Error(`Document with ID ${id} could not be found.`);
-    }
-    return doc;
+    const { data } = await api.get(`/documents/${id}`); 
+    return data;
   }, {
     retry: false, // Don't retry if the document is not found
   });
