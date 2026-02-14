@@ -18,11 +18,11 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-// Setup for PDF.js worker, essential for it to work
+// Set up the PDF.js worker. This is critical for the component to function.
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const DocumentViewer = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>(); // Explicitly type the id
   const navigate = useNavigate();
   const pdfContainerRef = useRef<HTMLDivElement>(null);
 
@@ -31,28 +31,43 @@ const DocumentViewer = () => {
   const [zoom, setZoom] = useState(1);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
-  // Make viewer responsive to container size
+  // Effect to make the PDF viewer responsive
   useEffect(() => {
     const container = pdfContainerRef.current;
     if (!container) return;
+
     const resizeObserver = new ResizeObserver(() => {
       setContainerWidth(container.clientWidth);
     });
     resizeObserver.observe(container);
+
     return () => resizeObserver.disconnect();
   }, []);
 
-  // --- DEFINITIVE DATA FETCHING FIX ---
-  // Use the dedicated endpoint to fetch a single document by its ID.
-  const { data: document, isLoading, isError, error } = useQuery(['document', id], async () => {
-    if (!id) throw new Error("No document ID provided in URL.");
-    const { data } = await api.get(`/documents/${id}`); 
-    return data;
-  }, {
-    retry: false, // Don't retry if the document is not found
-  });
+  // --- THIS IS THE DEFINITIVE FIX ---
+  // This data fetching logic now mirrors the working CVViewer component
+  // and uses the correct, dedicated API endpoint for a single document.
+  const { data: document, isLoading, isError, error } = useQuery(
+    ['document', id], // A unique key for this specific document
+    async () => {
+      console.log(`Fetching document with ID: ${id}`);
+      if (!id) {
+        throw new Error("No document ID was provided in the URL.");
+      }
+      const { data } = await api.get(`/documents/${id}`);
+      console.log(`API response for document ${id}:`, data);
+      if (!data || !data.fileUrl) {
+          throw new Error("The API response is missing the expected document data or fileUrl.");
+      }
+      return data;
+    },
+    {
+      enabled: !!id, // Only run the query if the id exists
+      retry: false,
+    }
+  );
 
-  // Apply security features
+  // Security features to disable printing and context menus
   useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => e.preventDefault();
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -69,25 +84,43 @@ const DocumentViewer = () => {
     };
   }, []);
 
-  // PDF load handlers
+  // Handlers for the PDF document loading process
   function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
     setNumPages(numPages);
     setPdfError(null);
   }
 
   function onDocumentLoadError(error: Error): void {
-    console.error("Public Document PDF Load Error:", error.message);
-    setPdfError(`Failed to load PDF. Message: ${error.message}`);
+    console.error("react-pdf Load Error:", error.message);
+    setPdfError(`Failed to load the PDF file. It might be corrupted or the URL may be incorrect. (${error.message})`);
   }
 
   const fileUrl = document?.fileUrl ? `${BASE_URL}${document.fileUrl}` : '';
 
-  // Main render logic
-  const renderContent = () => {
-    if (isLoading) return <LoadingSpinner />;
-    if (isError) return <div className="w-full h-full flex flex-col items-center justify-center text-red-500 p-4 text-center"><ShieldAlert size={48} className="mb-4" /><h2 className="text-xl font-bold">Error Loading Document</h2><p>{error instanceof Error ? error.message : 'An unknown error occurred'}</p></div>;
-    if (pdfError) return <div className="w-full h-full flex items-center justify-center text-red-500 p-4 text-center"><AlertTriangle size={48} className="mb-4"/><p>{pdfError}</p></div>;
-    
+  // Main render logic with clear states for loading, error, and success
+  const renderDocument = () => {
+    if (isLoading) {
+      return <div className="flex items-center justify-center h-full"><LoadingSpinner /></div>;
+    }
+
+    if (isError) {
+      return (
+        <div className="p-8 text-center text-red-400">
+          <h3 className="font-bold text-lg">Error Loading Document</h3>
+          <p className="text-sm">{(error as Error)?.message || "An unknown error occurred."}</p>
+        </div>
+      );
+    }
+
+    if (pdfError) {
+        return (
+          <div className="p-8 text-center text-red-400">
+            <h3 className="font-bold text-lg">PDF Render Error</h3>
+            <p className="text-sm">{pdfError}</p>
+          </div>
+        );
+    }
+
     if (fileUrl && containerWidth > 0) {
       return (
         <Document
@@ -98,7 +131,7 @@ const DocumentViewer = () => {
           className="flex flex-col items-center py-4"
           onContextMenu={(e) => e.preventDefault()}
         >
-          {Array.from(new Array(numPages), (el, index) => (
+          {Array.from({ length: numPages || 0 }, (_, index) => (
             <Page
               key={`page_${index + 1}`}
               pageNumber={index + 1}
@@ -114,7 +147,13 @@ const DocumentViewer = () => {
       );
     }
 
-    return <div className="w-full h-full flex items-center justify-center text-gray-500"><p>Document not found or URL is invalid.</p></div>;
+    // Fallback if no fileUrl is found after loading
+    return (
+        <div className="p-8 text-center text-gray-500">
+          <h3 className="font-bold text-lg">Document Not Available</h3>
+          <p className="text-sm">The URL for this document could not be found.</p>
+        </div>
+    );
   };
 
   return (
@@ -122,25 +161,25 @@ const DocumentViewer = () => {
       <div className="max-w-6xl mx-auto">
         {/* Header & Toolbar */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
-          <div className="space-y-2">
-            <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors font-bold text-sm mb-4">
-              <ChevronLeft size={18} /> Back
-            </button>
-            <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
-              {document?.title || 'Document Viewer'}
-            </h1>
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/20">
-                {document ? `Protected ${document.type}` : 'Protected Document'}
-              </span>
-              <span className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase"><ShieldCheck size={12} className="text-green-500" /> Encrypted Access</span>
+            <div className="space-y-2">
+                <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors font-bold text-sm mb-4">
+                    <ChevronLeft size={18} /> Back
+                </button>
+                <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+                    {document?.title || "Loading Document..."}
+                </h1>
+                <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/20">
+                        {document ? `Protected ${document.type}` : 'Protected Document'}
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase"><ShieldCheck size={12} className="text-green-500" /> Encrypted Access</span>
+                </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2 bg-gray-100 dark:bg-white/5 p-2 rounded-2xl border border-gray-200 dark:border-white/10 self-start lg:self-center shadow-xl">
-            <button onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))} className="p-3 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-gray-600 dark:text-gray-300" title="Zoom Out"><ZoomOut size={20} /></button>
-            <span className="px-4 text-sm font-black text-gray-900 dark:text-white min-w-[60px] text-center">{Math.round(zoom * 100)}%</span>
-            <button onClick={() => setZoom(prev => Math.min(2.5, prev + 0.1))} className="p-3 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-gray-600 dark:text-gray-300" title="Zoom In"><ZoomIn size={20} /></button>
-          </div>
+            <div className="flex items-center gap-2 bg-gray-100 dark:bg-white/5 p-2 rounded-2xl border border-gray-200 dark:border-white/10 self-start lg:self-center shadow-xl">
+                <button onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))} className="p-3 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-gray-600 dark:text-gray-300" title="Zoom Out"><ZoomOut size={20} /></button>
+                <span className="px-4 text-sm font-black text-gray-900 dark:text-white min-w-[60px] text-center">{Math.round(zoom * 100)}%</span>
+                <button onClick={() => setZoom(prev => Math.min(2.5, prev + 0.1))} className="p-3 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-gray-600 dark:text-gray-300" title="Zoom In"><ZoomIn size={20} /></button>
+            </div>
         </div>
 
         {/* Security Banner */}
@@ -163,7 +202,9 @@ const DocumentViewer = () => {
             <div className="absolute inset-0 z-20 pointer-events-none opacity-[0.03] dark:opacity-[0.05] flex flex-wrap gap-24 p-24 overflow-hidden rotate-[-20deg] select-none">
               {[...Array(30)].map((_, i) => (<span key={i} className="text-5xl font-black whitespace-nowrap text-black dark:text-white uppercase tracking-widest">ESRON PROTECTED</span>))}
             </div>
-            {renderContent()}
+            
+            {renderDocument()}
+
             <div className="absolute bottom-8 right-8 z-40 px-6 py-3 glass dark:glass-dark rounded-full border border-primary/20 flex items-center gap-3 backdrop-blur-2xl">
               <RefreshCcw size={14} className="text-primary animate-spin-slow" />
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white">Live Secure Mode</span>
