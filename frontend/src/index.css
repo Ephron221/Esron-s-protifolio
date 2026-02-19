@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-white text-black transition-colors duration-300 dark:bg-black dark:text-white;
+    @apply bg-light-bg text-light-text transition-colors duration-300 dark:bg-dark-bg dark:text-dark-text;
   }
 }
 
@@ -22,7 +22,7 @@
   }
 
   .glass-dark {
-    @apply bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/5;
+    @apply bg-white dark:bg-black/40 backdrop-blur-xl border border-gray-200 dark:border-white/5 shadow-sm;
   }
 
   .section-title {

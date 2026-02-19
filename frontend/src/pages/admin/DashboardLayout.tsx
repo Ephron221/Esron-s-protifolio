@@ -51,16 +51,16 @@ const DashboardLayout = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#020202] text-gray-100 selection:bg-primary/30 selection:text-primary">
+    <div className="flex min-h-screen bg-light-bg dark:bg-[#020202] text-light-text dark:text-gray-100 selection:bg-primary/30 selection:text-primary">
       {/* Sidebar */}
       <aside 
         className={clsx(
-          "fixed inset-y-0 left-0 z-50 bg-[#080808] border-r border-white/5 transition-all duration-500 ease-in-out shadow-2xl",
+          "fixed inset-y-0 left-0 z-50 bg-white dark:bg-[#080808] border-r border-gray-200 dark:border-white/5 transition-all duration-500 ease-in-out shadow-2xl",
           isSidebarOpen ? "w-72" : "w-20"
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between h-24 px-8 border-b border-white/5">
+          <div className="flex items-center justify-between h-24 px-8 border-b border-gray-200 dark:border-white/5">
             <AnimatePresence mode="wait">
               {isSidebarOpen ? (
                 <motion.div
@@ -73,7 +73,7 @@ const DashboardLayout = () => {
                   <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center text-black font-black text-xl shadow-[0_0_20px_rgba(0,255,255,0.4)]">
                     E
                   </div>
-                  <span className="font-bold text-lg tracking-wider text-white">ADMIN <span className="text-primary">HUB</span></span>
+                  <span className="font-bold text-lg tracking-wider text-gray-900 dark:text-white">ADMIN <span className="text-primary">HUB</span></span>
                 </motion.div>
               ) : (
                 <motion.div
@@ -102,7 +102,7 @@ const DashboardLayout = () => {
                     "flex items-center px-4 py-3.5 rounded-2xl transition-all duration-300 group relative overflow-hidden",
                     isActive 
                       ? "bg-primary/10 text-primary" 
-                      : "text-gray-500 hover:text-white hover:bg-white/[0.03]"
+                      : "text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/[0.03]"
                   )}
                 >
                   {isActive && (
@@ -129,12 +129,12 @@ const DashboardLayout = () => {
             })}
           </nav>
 
-          <div className="p-6 border-t border-white/5 space-y-4">
+          <div className="p-6 border-t border-gray-200 dark:border-white/5 space-y-4">
             <Link 
               to="/" 
               target="_blank"
               className={clsx(
-                "flex items-center w-full px-4 py-3.5 rounded-2xl text-gray-400 hover:text-white hover:bg-white/5 transition-all",
+                "flex items-center w-full px-4 py-3.5 rounded-2xl text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 transition-all",
                 !isSidebarOpen && "justify-center"
               )}
             >
@@ -145,7 +145,7 @@ const DashboardLayout = () => {
             <button
               onClick={handleLogout}
               className={clsx(
-                "flex items-center w-full px-4 py-3.5 rounded-2xl text-red-400/70 hover:text-red-400 hover:bg-red-400/10 transition-all",
+                "flex items-center w-full px-4 py-3.5 rounded-2xl text-red-500/70 hover:text-red-500 hover:bg-red-500/10 transition-all",
                 !isSidebarOpen && "justify-center"
               )}
             >
@@ -164,37 +164,37 @@ const DashboardLayout = () => {
         {/* Top Header */}
         <header className={clsx(
           "sticky top-0 z-40 px-10 flex items-center justify-between h-24 transition-all duration-300 backdrop-blur-xl border-b",
-          scrolled ? "bg-black/60 border-white/10" : "bg-transparent border-transparent"
+          scrolled ? "bg-white/80 dark:bg-black/60 border-gray-200 dark:border-white/10" : "bg-transparent border-transparent"
         )}>
           <div className="flex items-center gap-6">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl transition-all border border-white/5"
+              className="p-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-xl transition-all border border-gray-200 dark:border-white/5"
             >
               {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
-            <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-white/5 rounded-xl border border-white/5 group focus-within:border-primary/50 transition-all">
+            <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-gray-100 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/5 group focus-within:border-primary/50 transition-all">
               <Search size={18} className="text-gray-500 group-focus-within:text-primary" />
               <input 
                 type="text" 
                 placeholder="Search..."
-                className="bg-transparent border-none outline-none text-sm w-48 placeholder:text-gray-600"
+                className="bg-transparent border-none outline-none text-sm w-48 placeholder:text-gray-500 dark:placeholder:text-gray-600"
               />
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="relative p-2.5 bg-white/5 hover:bg-white/10 rounded-xl transition-all border border-white/5 group">
-              <Bell size={20} className="text-gray-400 group-hover:text-white" />
+            <button className="relative p-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-xl transition-all border border-gray-200 dark:border-white/5 group">
+              <Bell size={20} className="text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full shadow-[0_0_10px_rgba(0,255,255,0.8)]"></span>
             </button>
-            <div className="flex items-center gap-3 pl-4 border-l border-white/10">
+            <div className="flex items-center gap-3 pl-4 border-l border-gray-200 dark:border-white/10">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-white leading-none">Esron Admin</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white leading-none">Esron Admin</p>
                 <p className="text-[10px] text-primary uppercase font-black tracking-widest mt-1">Superuser</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 p-[1.5px]">
-                <div className="w-full h-full rounded-[10px] bg-black flex items-center justify-center overflow-hidden">
+                <div className="w-full h-full rounded-[10px] bg-gray-900 dark:bg-black flex items-center justify-center overflow-hidden">
                    <User size={20} className="text-primary" />
                 </div>
               </div>
