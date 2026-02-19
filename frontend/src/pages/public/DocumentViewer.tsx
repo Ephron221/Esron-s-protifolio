@@ -37,7 +37,7 @@ const DocumentViewer = () => {
     const container = pdfContainerRef.current;
     if (!container) return;
     const resizeObserver = new ResizeObserver(() => {
-      setContainerWidth(container.clientWidth - 30);
+      setContainerWidth(container.clientWidth);
     });
     resizeObserver.observe(container);
     return () => resizeObserver.disconnect();
