@@ -1,223 +1,113 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import api, { BASE_URL } from '../../services/api';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
-import {
-  ShieldAlert,
-  Lock,
-  ChevronLeft,
-  ZoomIn,
-  ZoomOut,
-  ShieldCheck,
-  RefreshCcw,
-  AlertTriangle
-} from 'lucide-react';
+import { Lock, Expand, Download, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import { useFullscreen, useToggle } from 'react-use';
+
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
 
-// Set up the PDF.js worker. This is critical for the component to function.
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 const DocumentViewer = () => {
-  const { id } = useParams<{ id: string }>(); // Explicitly type the id
-  const navigate = useNavigate();
+  const { id } = useParams();
+  const fullscreenRef = useRef(null);
   const pdfContainerRef = useRef<HTMLDivElement>(null);
+  const [show, toggle] = useToggle(false);
+  const isFullscreen = useFullscreen(fullscreenRef, show, {onClose: () => toggle(false)});
 
   const [numPages, setNumPages] = useState<number | null>(null);
+  const [pageNumber, setPageNumber] = useState(1);
   const [containerWidth, setContainerWidth] = useState(0);
-  const [zoom, setZoom] = useState(1);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
-  // Effect to make the PDF viewer responsive
+
+  const { data: document, isLoading, error } = useQuery(['document', id], async () => {
+    const { data } = await api.get(`/documents/${id}`);
+    return data;
+  });
+
   useEffect(() => {
     const container = pdfContainerRef.current;
-    if (!container) return;
-
-    const resizeObserver = new ResizeObserver(() => {
+    if (!container || isLoading) return;
+    
+    const updateWidth = () => {
       setContainerWidth(container.clientWidth);
-    });
+    };
+
+    const resizeObserver = new ResizeObserver(updateWidth);
     resizeObserver.observe(container);
+    
+    updateWidth();
 
     return () => resizeObserver.disconnect();
-  }, []);
+  }, [isLoading]);
 
-  // --- DEFINITIVE DATA FETCHING FIX ---
-  // This data fetching logic now mirrors the working CVViewer component
-  // and uses the correct, dedicated API endpoint for a single document.
-  const { data: document, isLoading, isError, error } = useQuery(
-    ['document', id], // A unique key for this specific document
-    async () => {
-      console.log(`Fetching document with ID: ${id}`);
-      if (!id) {
-        throw new Error("No document ID was provided in the URL.");
-      }
-      const { data } = await api.get(`/documents/${id}`);
-      console.log(`API response for document ${id}:`, data);
-      if (!data || !data.fileUrl) {
-          throw new Error("The API response is missing the expected document data or fileUrl.");
-      }
-      return data;
-    },
-    {
-      enabled: !!id, // Only run the query if the id exists
-      retry: false,
-    }
-  );
-
-  // Security features to disable printing and context menus
-  useEffect(() => {
-    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && ['p', 's', 'u', 'c'].includes(e.key.toLowerCase())) {
-        e.preventDefault();
-        alert('Security Alert: This action is disabled to protect the document.');
-      }
-    };
-    window.addEventListener('contextmenu', handleContextMenu);
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('contextmenu', handleContextMenu);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
-
-  // Handlers for the PDF document loading process
-  function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
+    setPageNumber(1);
     setPdfError(null);
   }
 
-  function onDocumentLoadError(error: Error): void {
-    console.error("react-pdf Load Error:", error.message);
-    setPdfError(`Failed to load the PDF file. It might be corrupted or the URL may be incorrect. (${error.message})`);
+  function onDocumentLoadError(error: Error) {
+    setPdfError(`Failed to load PDF. ${error.message}. Please try downloading.`);
   }
+  
+  const goToPrevPage = () => setPageNumber(p => Math.max(p - 1, 1));
+  const goToNextPage = () => setPageNumber(p => Math.min(p + 1, numPages || 1));
 
-  const fileUrl = document?.fileUrl ? `${BASE_URL}${document.fileUrl}` : '';
 
-  // Main render logic with clear states for loading, error, and success
-  const renderDocument = () => {
-    if (isLoading) {
-      return <div className="flex items-center justify-center h-full"><LoadingSpinner /></div>;
-    }
-
-    if (isError) {
-      return (
-        <div className="p-8 text-center text-red-400">
-          <h3 className="font-bold text-lg">Error Loading Document</h3>
-          <p className="text-sm">{(error as Error)?.message || "An unknown error occurred."}</p>
-        </div>
-      );
-    }
-
-    if (pdfError) {
-        return (
-          <div className="p-8 text-center text-red-400">
-            <h3 className="font-bold text-lg">PDF Render Error</h3>
-            <p className="text-sm">{pdfError}</p>
-          </div>
-        );
-    }
-
-    if (fileUrl && containerWidth > 0) {
-      return (
-        <Document
-          file={fileUrl}
-          onLoadSuccess={onDocumentLoadSuccess}
-          onLoadError={onDocumentLoadError}
-          loading={<LoadingSpinner />}
-          className="flex flex-col items-center py-4"
-          onContextMenu={(e) => e.preventDefault()}
-        >
-          {Array.from({ length: numPages || 0 }, (_, index) => (
-            <Page
-              key={`page_${index + 1}`}
-              pageNumber={index + 1}
-              width={containerWidth}
-              scale={zoom}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              className="mb-4 shadow-lg"
-              onContextMenu={(e) => e.preventDefault()}
-            />
-          ))}
-        </Document>
-      );
-    }
-
-    // Fallback if no fileUrl is found after loading
-    return (
-        <div className="p-8 text-center text-gray-500">
-          <h3 className="font-bold text-lg">Document Not Available</h3>
-          <p className="text-sm">The URL for this document could not be found.</p>
-        </div>
-    );
-  };
+  if (isLoading) return <div className="dark h-screen flex items-center justify-center bg-dark-bg"><LoadingSpinner /></div>;
+  if (error) return <div className="dark h-screen flex items-center justify-center text-red-500 bg-dark-bg">Error loading document. It may be protected or does not exist.</div>;
 
   return (
-    <div className="min-h-screen pt-24 pb-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-black transition-colors duration-500">
-      <div className="max-w-6xl mx-auto">
-        {/* Header & Toolbar */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
-            <div className="space-y-2">
-                <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors font-bold text-sm mb-4">
-                    <ChevronLeft size={18} /> Back
-                </button>
-                <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
-                    {document?.title || "Loading Document..."}
-                </h1>
-                <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/20">
-                        {document ? `Protected ${document.type}` : 'Protected Document'}
-                    </span>
-                    <span className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase"><ShieldCheck size={12} className="text-green-500" /> Encrypted Access</span>
-                </div>
-            </div>
-            <div className="flex items-center gap-2 bg-gray-100 dark:bg-white/5 p-2 rounded-2xl border border-gray-200 dark:border-white/10 self-start lg:self-center shadow-xl">
-                <button onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))} className="p-3 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-gray-600 dark:text-gray-300" title="Zoom Out"><ZoomOut size={20} /></button>
-                <span className="px-4 text-sm font-black text-gray-900 dark:text-white min-w-[60px] text-center">{Math.round(zoom * 100)}%</span>
-                <button onClick={() => setZoom(prev => Math.min(2.5, prev + 0.1))} className="p-3 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-gray-600 dark:text-gray-300" title="Zoom In"><ZoomIn size={20} /></button>
-            </div>
+    <div ref={fullscreenRef} className="dark bg-dark-bg min-h-screen text-white selection:bg-primary/20">
+      <header className="p-4 flex justify-between items-center bg-dark-surface/50 backdrop-blur-sm sticky top-0 z-20 border-b border-white/10">
+        <div className="flex flex-col">
+          <h1 className="font-bold text-lg">{document?.title}</h1>
+          <p className="text-xs text-primary font-bold uppercase tracking-widest flex items-center gap-2">
+            <Lock size={12} /><span>{document?.type} &bull; Secured Access</span>
+          </p>
         </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => toggle()} className="p-2 rounded-full hover:bg-white/10 hidden md:block"><Expand size={18} /></button>
+          <a href={`${BASE_URL}${document.fileUrl}`} download={document.title.replace(/ /g, '_') + '.pdf'} target="_blank" rel="noreferrer" className="p-2 rounded-full hover:bg-white/10">
+            <Download size={18} />
+          </a>
+        </div>
+      </header>
 
-        {/* Security Banner */}
-        <div className="mb-8 p-4 bg-primary/5 border border-primary/10 rounded-2xl flex items-start gap-4">
-          <Lock className="text-primary shrink-0 mt-1" size={20} />
-          <div>
-            <p className="text-sm font-bold text-primary uppercase tracking-wider mb-1">Secure Viewing Mode</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">This document is digitally protected. Mobile capture, printing, and downloading are restricted.</p>
+      <main className="p-0 md:p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-dark-surface rounded-lg shadow-lg overflow-hidden">
+            <div ref={pdfContainerRef} className="p-0 md:p-4 bg-dark-bg relative">
+              <Document
+                file={{
+                  url: `${BASE_URL}${document.fileUrl}`,
+                }}
+                onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={onDocumentLoadError}
+                loading={<div className="text-center h-96 flex items-center justify-center"><LoadingSpinner /></div>}
+                error={<div className="text-center p-8 text-red-400">{pdfError}</div>}
+                className="flex justify-center"
+              >
+                 { !pdfError && <Page pageNumber={pageNumber} width={containerWidth > 0 ? containerWidth : undefined} renderTextLayer={false} /> }
+              </Document>
+            </div>
+
+            {numPages && numPages > 1 && (
+               <div className="p-3 flex items-center justify-center gap-4 bg-dark-surface/80 border-t border-white/10">
+                 <button onClick={goToPrevPage} disabled={pageNumber <= 1} className="p-2 rounded-full hover:bg-white/10 disabled:opacity-50"><ChevronsLeft size={18} /></button>
+                 <span className="text-sm font-bold">Page {pageNumber} of {numPages}</span>
+                 <button onClick={goToNextPage} disabled={pageNumber >= numPages} className="p-2 rounded-full hover:bg-white/10 disabled:opacity-50"><ChevronsRight size={18} /></button>
+               </div>
+            )}
           </div>
         </div>
-
-        {/* SECURE VIEWER CONTAINER */}
-        <div className="relative group">
-          <motion.div
-            layout
-            ref={pdfContainerRef}
-            className="relative bg-zinc-200 dark:bg-zinc-900 rounded-[40px] overflow-auto shadow-[0_0_100px_rgba(0,0,0,0.3)] border-4 border-gray-100 dark:border-white/5 transition-all duration-500 ease-in-out h-[85vh] custom-scrollbar"
-          >
-            <div className="absolute inset-0 z-30 pointer-events-none" onContextMenu={(e) => e.preventDefault()} />
-            <div className="absolute inset-0 z-20 pointer-events-none opacity-[0.03] dark:opacity-[0.05] flex flex-wrap gap-24 p-24 overflow-hidden rotate-[-20deg] select-none">
-              {[...Array(30)].map((_, i) => (<span key={i} className="text-5xl font-black whitespace-nowrap text-black dark:text-white uppercase tracking-widest">ESRON PROTECTED</span>))}
-            </div>
-            
-            {renderDocument()}
-
-            <div className="absolute bottom-8 right-8 z-40 px-6 py-3 glass dark:glass-dark rounded-full border border-primary/20 flex items-center gap-3 backdrop-blur-2xl">
-              <RefreshCcw size={14} className="text-primary animate-spin-slow" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white">Live Secure Mode</span>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Footer Warning */}
-        <div className="mt-12 flex flex-col items-center gap-4 text-gray-500 text-center">
-          <p className="flex items-center gap-2 text-sm font-medium"><AlertTriangle size={18} className="text-primary" /> Unauthorized distribution is prohibited.</p>
-          <p className="text-xs max-w-lg leading-relaxed">Request an official copy via the <a href="/contact" className="text-primary font-bold hover:underline ml-1">Contact Page</a>.</p>
-        </div>
-      </div>
+      </main>
     </div>
   );
 };
