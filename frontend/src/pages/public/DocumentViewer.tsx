@@ -1,113 +1,191 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import api, { BASE_URL } from '../../services/api';
-import { Lock, Expand, Download, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import {
+  ShieldAlert,
+  Lock,
+  ChevronLeft,
+  ZoomIn,
+  ZoomOut,
+  ShieldCheck,
+  RefreshCcw,
+  AlertTriangle,
+  Download
+} from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { useFullscreen, useToggle } from 'react-use';
-
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+// Setup for PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 const DocumentViewer = () => {
   const { id } = useParams();
-  const fullscreenRef = useRef(null);
+  const navigate = useNavigate();
   const pdfContainerRef = useRef<HTMLDivElement>(null);
-  const [show, toggle] = useToggle(false);
-  const isFullscreen = useFullscreen(fullscreenRef, show, {onClose: () => toggle(false)});
 
   const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState(1);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [zoom, setZoom] = useState(1);
   const [pdfError, setPdfError] = useState<string | null>(null);
 
+  // Make viewer responsive (from CVViewer)
+  useEffect(() => {
+    const container = pdfContainerRef.current;
+    if (!container) return;
+    const resizeObserver = new ResizeObserver(() => {
+      setContainerWidth(container.clientWidth - 30);
+    });
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, []);
 
-  const { data: document, isLoading, error } = useQuery(['document', id], async () => {
+  // Data fetching for the specific document
+  const { data: document, isLoading, isError, error } = useQuery(['document', id], async () => {
     const { data } = await api.get(`/documents/${id}`);
     return data;
   });
 
+  // Security features (from CVViewer)
   useEffect(() => {
-    const container = pdfContainerRef.current;
-    if (!container || isLoading) return;
-    
-    const updateWidth = () => {
-      setContainerWidth(container.clientWidth);
+    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && ['p', 's', 'u', 'c'].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+      }
     };
+    window.addEventListener('contextmenu', handleContextMenu);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('contextmenu', handleContextMenu);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
-    const resizeObserver = new ResizeObserver(updateWidth);
-    resizeObserver.observe(container);
-    
-    updateWidth();
-
-    return () => resizeObserver.disconnect();
-  }, [isLoading]);
-
-  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
     setNumPages(numPages);
-    setPageNumber(1);
     setPdfError(null);
   }
 
-  function onDocumentLoadError(error: Error) {
-    setPdfError(`Failed to load PDF. ${error.message}. Please try downloading.`);
+  function onDocumentLoadError(error: Error): void {
+    console.error("PDF.js Load Error:", error.message);
+    setPdfError(`Failed to load PDF. Message: ${error.message}`);
   }
   
-  const goToPrevPage = () => setPageNumber(p => Math.max(p - 1, 1));
-  const goToNextPage = () => setPageNumber(p => Math.min(p + 1, numPages || 1));
+  const fileUrl = document?.fileUrl ? `${BASE_URL}${document.fileUrl}` : '';
 
+  const renderContent = () => {
+    if (isLoading) {
+      return <LoadingSpinner />;
+    }
 
-  if (isLoading) return <div className="dark h-screen flex items-center justify-center bg-dark-bg"><LoadingSpinner /></div>;
-  if (error) return <div className="dark h-screen flex items-center justify-center text-red-500 bg-dark-bg">Error loading document. It may be protected or does not exist.</div>;
+    if (isError) {
+      return <div className="w-full h-full flex items-center justify-center text-red-500 p-4">Error loading document: {error instanceof Error ? error.message : 'The document may be protected or does not exist.'}.</div>;
+    }
+
+    if (pdfError) {
+      return <div className="w-full h-full flex items-center justify-center text-red-500 p-4">{pdfError}</div>;
+    }
+
+    if (fileUrl && containerWidth > 0) {
+      return (
+        <Document
+          file={fileUrl}
+          onLoadSuccess={onDocumentLoadSuccess}
+          onLoadError={onDocumentLoadError}
+          loading={<LoadingSpinner />}
+          className="flex flex-col items-center py-4"
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          {Array.from(new Array(numPages), (el, index) => (
+            <Page
+              key={`page_${index + 1}`}
+              pageNumber={index + 1}
+              width={containerWidth}
+              scale={zoom}
+              renderTextLayer={false}
+              renderAnnotationLayer={false}
+              className="mb-4 shadow-lg"
+              onContextMenu={(e) => e.preventDefault()}
+            />
+          ))}
+        </Document>
+      );
+    }
+    
+    return (
+      <div className='w-full h-full flex flex-col items-center justify-center text-gray-500 p-4'>
+        <p className='font-bold text-lg'>Document not found.</p>
+        <p className='text-sm mt-2'>The document could not be loaded. It may have been removed or the link is incorrect.</p>
+      </div>
+    );
+  };
 
   return (
-    <div ref={fullscreenRef} className="dark bg-dark-bg min-h-screen text-white selection:bg-primary/20">
-      <header className="p-4 flex justify-between items-center bg-dark-surface/50 backdrop-blur-sm sticky top-0 z-20 border-b border-white/10">
-        <div className="flex flex-col">
-          <h1 className="font-bold text-lg">{document?.title}</h1>
-          <p className="text-xs text-primary font-bold uppercase tracking-widest flex items-center gap-2">
-            <Lock size={12} /><span>{document?.type} &bull; Secured Access</span>
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => toggle()} className="p-2 rounded-full hover:bg-white/10 hidden md:block"><Expand size={18} /></button>
-          <a href={`${BASE_URL}${document.fileUrl}`} download={document.title.replace(/ /g, '_') + '.pdf'} target="_blank" rel="noreferrer" className="p-2 rounded-full hover:bg-white/10">
-            <Download size={18} />
-          </a>
-        </div>
-      </header>
-
-      <main className="p-0 md:p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-dark-surface rounded-lg shadow-lg overflow-hidden">
-            <div ref={pdfContainerRef} className="p-0 md:p-4 bg-dark-bg relative">
-              <Document
-                file={{
-                  url: `${BASE_URL}${document.fileUrl}`,
-                }}
-                onLoadSuccess={onDocumentLoadSuccess}
-                onLoadError={onDocumentLoadError}
-                loading={<div className="text-center h-96 flex items-center justify-center"><LoadingSpinner /></div>}
-                error={<div className="text-center p-8 text-red-400">{pdfError}</div>}
-                className="flex justify-center"
-              >
-                 { !pdfError && <Page pageNumber={pageNumber} width={containerWidth > 0 ? containerWidth : undefined} renderTextLayer={false} /> }
-              </Document>
+    <div className="min-h-screen pt-24 pb-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-black transition-colors duration-500">
+      <div className="max-w-6xl mx-auto">
+        {/* Header & Toolbar */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+            <div className="space-y-2">
+                <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors font-bold text-sm mb-4">
+                    <ChevronLeft size={18} /> Back
+                </button>
+                <h1 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">{document?.title || 'Document'}</h1>
+                <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 bg-yellow-500/10 text-yellow-500 rounded-full text-[10px] font-black uppercase tracking-widest border border-yellow-500/20">{document?.type || 'Secured'}</span>
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase"><ShieldCheck size={12} className="text-green-500" /> Protected</span>
+                </div>
             </div>
 
-            {numPages && numPages > 1 && (
-               <div className="p-3 flex items-center justify-center gap-4 bg-dark-surface/80 border-t border-white/10">
-                 <button onClick={goToPrevPage} disabled={pageNumber <= 1} className="p-2 rounded-full hover:bg-white/10 disabled:opacity-50"><ChevronsLeft size={18} /></button>
-                 <span className="text-sm font-bold">Page {pageNumber} of {numPages}</span>
-                 <button onClick={goToNextPage} disabled={pageNumber >= numPages} className="p-2 rounded-full hover:bg-white/10 disabled:opacity-50"><ChevronsRight size={18} /></button>
-               </div>
-            )}
+            <div className="flex items-center gap-2 bg-gray-100 dark:bg-white/5 p-2 rounded-2xl border border-gray-200 dark:border-white/10 self-start lg:self-center shadow-xl">
+                <button onClick={() => setZoom(prev => Math.max(0.5, prev - 0.1))} className="p-3 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-gray-600 dark:text-gray-300" title="Zoom Out"><ZoomOut size={20} /></button>
+                <span className="px-4 text-sm font-black text-gray-900 dark:text-white min-w-[60px] text-center">{Math.round(zoom * 100)}%</span>
+                <button onClick={() => setZoom(prev => Math.min(2.5, prev + 0.1))} className="p-3 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-gray-600 dark:text-gray-300" title="Zoom In"><ZoomIn size={20} /></button>
+                <a href={fileUrl} download={document?.title.replace(/ /g, '_') + '.pdf'} target="_blank" rel="noreferrer" className="p-3 hover:bg-white dark:hover:bg-white/10 rounded-xl transition-all text-gray-600 dark:text-gray-300" title="Download">
+                  <Download size={20} />
+                </a>
+            </div>
+        </div>
+
+        {/* Security Banner */}
+        <div className="mb-8 p-4 bg-primary/5 border border-primary/10 rounded-2xl flex items-start gap-4">
+          <Lock className="text-primary shrink-0 mt-1" size={20} />
+          <div>
+            <p className="text-sm font-bold text-primary uppercase tracking-wider mb-1">Advanced Protection Enabled</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">This document is rendered in a secure, view-only mode. Downloading is available via the toolbar, but printing and copying are restricted.</p>
           </div>
         </div>
-      </main>
+
+        {/* SECURE DOCUMENT CONTAINER */}
+        <div className="relative group">
+          <motion.div
+            layout
+            ref={pdfContainerRef}
+            className="relative bg-zinc-200 dark:bg-zinc-900 rounded-[40px] overflow-auto shadow-[0_0_100px_rgba(0,0,0,0.3)] border-4 border-gray-100 dark:border-white/5 transition-all duration-500 ease-in-out h-[85vh] custom-scrollbar"
+          >
+            {/* Protection Layers */}
+            <div className="absolute inset-0 z-30 pointer-events-none" onContextMenu={(e) => e.preventDefault()} />
+            <div className="absolute inset-0 z-20 pointer-events-none opacity-[0.03] dark:opacity-[0.05] flex flex-wrap gap-24 p-24 overflow-hidden rotate-[-20deg] select-none">
+              {[...Array(30)].map((_, i) => (<span key={i} className="text-5xl font-black whitespace-nowrap text-black dark:text-white uppercase tracking-widest">ESRON PROTECTED</span>))}
+            </div>
+            
+            {renderContent()}
+            
+            <div className="absolute bottom-8 right-8 z-40 px-6 py-3 glass dark:glass-dark rounded-full border border-primary/20 flex items-center gap-3 backdrop-blur-2xl">
+                <RefreshCcw size={14} className="text-primary animate-spin-slow" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 dark:text-white">Live Secure Mode</span>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Footer Warning */}
+        <div className="mt-12 flex flex-col items-center gap-4 text-gray-500 text-center">
+          <p className="flex items-center gap-2 text-sm font-medium"><AlertTriangle size={18} className="text-primary" /> Unauthorized distribution is prohibited.</p>
+        </div>
+      </div>
     </div>
   );
 };
