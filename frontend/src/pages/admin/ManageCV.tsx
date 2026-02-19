@@ -10,8 +10,13 @@ const ManageCV = () => {
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
 
   const { data: cvData, isLoading } = useQuery(['cv'], async () => {
-    const { data } = await api.get('/cv');
-    return data;
+    try {
+      const { data } = await api.get('/cv');
+      return data;
+    } catch (error) {
+      // It's a 404, which is expected if no CV exists.
+      return null;
+    }
   });
 
   const uploadMutation = useMutation(
@@ -32,6 +37,15 @@ const ManageCV = () => {
     }
   );
 
+  const deleteMutation = useMutation(
+    () => api.delete('/cv'),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['cv']);
+      },
+    }
+  );
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
@@ -44,6 +58,12 @@ const ManageCV = () => {
     const formData = new FormData();
     formData.append('cv', file);
     uploadMutation.mutate(formData);
+  };
+  
+  const handleDelete = () => {
+    if (window.confirm('Are you sure you want to delete your CV? This action cannot be undone.')) {
+      deleteMutation.mutate();
+    }
   };
 
   if (isLoading) return <LoadingSpinner />;
@@ -132,8 +152,12 @@ const ManageCV = () => {
                   >
                     <Eye size={16} /> Preview
                   </a>
-                  <button className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
-                    <Trash2 size={20} />
+                  <button 
+                    onClick={handleDelete}
+                    disabled={deleteMutation.isLoading}
+                    className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {deleteMutation.isLoading ? <div className="w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" /> : <Trash2 size={20} />}
                   </button>
                 </div>
               </div>

@@ -1,5 +1,7 @@
 const Document = require('../models/Document');
 const asyncHandler = require('express-async-handler');
+const fs = require('fs');
+const path = require('path');
 
 // @desc    Get all documents
 // @route   GET /api/documents
@@ -70,13 +72,30 @@ const deleteDocument = asyncHandler(async (req, res) => {
   const document = await Document.findById(req.params.id);
 
   if (document) {
-    await document.remove(); // Use remove() instead of deleteOne() to trigger middleware if any
+    // If there's a file associated with the document, delete it from the server.
+    if (document.fileUrl) {
+      const filename = path.basename(document.fileUrl);
+      const filePath = path.join(__dirname, '..', '..', 'uploads', filename);
+
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (err) {
+        console.error(`Failed to delete file: ${filePath}`, err);
+        // We can choose to either stop the process or just log the error and continue.
+        // For now, we'll just log it and proceed with deleting the DB record.
+      }
+    }
+
+    await document.deleteOne();
     res.json({ message: 'Document removed' });
   } else {
     res.status(404);
     throw new Error('Document not found');
   }
 });
+
 
 module.exports = {
   getDocuments,

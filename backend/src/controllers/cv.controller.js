@@ -1,5 +1,7 @@
 const CV = require('../models/CV');
 const asyncHandler = require('express-async-handler');
+const fs = require('fs');
+const path = require('path');
 
 // @desc    Get the single CV
 // @route   GET /api/cv
@@ -46,4 +48,34 @@ const uploadCV = asyncHandler(async (req, res) => {
   res.status(201).json(updatedCV);
 });
 
-module.exports = { getCV, uploadCV };
+// @desc    Delete the CV
+// @route   DELETE /api/cv
+// @access  Private
+const deleteCV = asyncHandler(async (req, res) => {
+  const cv = await CV.findOne({});
+
+  if (cv) {
+    // Extract the file name from the URL
+    const filename = path.basename(cv.fileUrl);
+    const filePath = path.join(__dirname, '..', '..', 'uploads', filename);
+
+    // Use a try-catch block to handle file system errors
+    try {
+      // Check if the file exists before attempting to delete it
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      
+      await cv.deleteOne();
+      res.json({ message: 'CV removed' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Error removing CV file' });
+    }
+  } else {
+    res.status(404);
+    throw new Error('CV not found');
+  }
+});
+
+module.exports = { getCV, uploadCV, deleteCV };

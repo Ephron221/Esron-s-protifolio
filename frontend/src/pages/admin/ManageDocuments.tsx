@@ -103,6 +103,12 @@ const ManageDocuments = () => {
     }
   );
 
+  const handleDelete = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this document? This action cannot be undone.')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
   const handleEdit = (doc: any) => {
     setEditingId(doc._id);
     setFormData({
@@ -201,7 +207,7 @@ const ManageDocuments = () => {
                 <div className="flex gap-1">
                   <button onClick={() => handlePreview(doc)} className="p-2 text-gray-500 hover:text-primary transition-colors" title="Preview"><Eye size={18} /></button>
                   <button onClick={() => handleEdit(doc)} className="p-2 text-gray-500 hover:text-blue-500 transition-colors" title="Edit"><Pencil size={18} /></button>
-                  <button onClick={() => deleteMutation.mutate(doc._id)} className="p-2 text-gray-500 hover:text-red-500 transition-colors" title="Delete"><Trash2 size={18} /></button>
+                  <button onClick={() => handleDelete(doc._id)} className="p-2 text-gray-500 hover:text-red-500 transition-colors" title="Delete"><Trash2 size={18} /></button>
                 </div>
               </div>
               <h3 className="font-bold text-lg mb-1">{doc.title}</h3>
